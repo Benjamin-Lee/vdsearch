@@ -94,10 +94,10 @@ def callback():
     """
     Unstable internal commands.
 
-    **Beware!**
+    ## Beware!
 
     You are entering the wilderness.
-    Beyond the safe confines of the main pipeline lies mystery, adventure, and, perhaps, danger.
+    Beyond the cozy confines of the main pipeline lies mystery, adventure, and, perhaps, danger.
 
     These scripts are not meant to be run by humans, only Benjamin (and maybe Neri).
     It's very likely that they are buggy, undocumented, or unrelated to the main pipeline.
