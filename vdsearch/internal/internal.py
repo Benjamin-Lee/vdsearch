@@ -97,10 +97,11 @@ def callback():
     ## Beware!
 
     You are entering the wilderness.
-    Beyond the cozy confines of the main pipeline lies mystery, adventure, and, perhaps, danger.
+    Beyond the cozy confines of the main pipeline lies mystery, adventure, and, perhaps,
+     danger.
 
     These scripts are not meant to be run by humans, only Benjamin (and maybe Neri).
-    It's very likely that they are buggy, undocumented, or unrelated to the main pipeline.
+    It's likely that they are buggy, undocumented, or unrelated to the main pipeline.
 
     If you're not Benjamin, you should not be here.
     If you're not Neri, you should not be here.
