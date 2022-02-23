@@ -22,12 +22,12 @@ logging.basicConfig(
 # define the CLI app to use the custom Rich-enabled typer
 app = MyTyper()
 
-app.command()(commands.download_cms)
-app.command()(commands.download_viroiddb)
-app.command()(commands.find_circs)
-app.command()(commands.dedup)
-app.command()(commands.cluster)
-app.command()(commands.easy_search)
+app.command()(commands.download_cms)  # type: ignore
+app.command()(commands.download_viroiddb)  # type: ignore
+app.command()(commands.find_circs)  # type: ignore
+app.command()(commands.dedup)  # type: ignore
+app.command()(commands.cluster)  # type: ignore
+app.command()(commands.easy_search)  # type: ignore
 
 
 # Support for using --version

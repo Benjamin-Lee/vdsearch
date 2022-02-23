@@ -24,8 +24,13 @@ def dedup(
     logging.warn(
         "This command expects canonicalized and monomerized sequences.",
     )
-    with console.status("Removing duplicates...") as sp:
-        command = f"seqkit rmdup --by-seq --only-positive-strand --ignore-case {fasta} -o {output}"
+    with console.status("Removing duplicates..."):
+        command = (
+            "seqkit rmdup "
+            "--by-seq "
+            "--only-positive-strand "
+            f"--ignore-case {fasta} -o {output}"
+        )
         logging.debug("Running command [cyan]{}[/]".format(command))
         try:
             result = subprocess.run(
@@ -33,7 +38,8 @@ def dedup(
             )
             count = result.stderr.decode("utf-8").split()[1]
             console.log(
-                f"[green]:heavy_check_mark:[/] Done removing duplicates. {count} sequences removed."
+                "[green]:heavy_check_mark:[/] Done removing duplicates. "
+                f"{count} sequences removed."
             )
         except subprocess.CalledProcessError as e:
             logging.error(f"Command failed with exit code {e.returncode}")

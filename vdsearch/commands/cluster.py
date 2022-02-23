@@ -13,7 +13,7 @@ def cluster(fasta: Path = FASTA):
     """Cluster circular sequences."""
     logfile = Path("mmseqs.log.txt")
     console = Console()
-    with console.status(f"Clustering [cyan]{str(fasta)}[/]") as sp:
+    with console.status(f"Clustering [cyan]{str(fasta)}[/]"):
         try:
             subprocess.run(
                 f"seqkit concat --quiet {fasta} {fasta} | "
@@ -30,7 +30,7 @@ def cluster(fasta: Path = FASTA):
                 shell=True,
                 check=True,
             )
-            console.log(f"[green]:heavy_check_mark:[/] Done clustering.")
+            console.log("[green]:heavy_check_mark:[/] Done clustering.")
         except subprocess.CalledProcessError as e:
             logging.error(f"Command failed with exit code {e.returncode}")
             logging.error(f"Command output: '{e.output.decode('utf-8').rstrip()}'")

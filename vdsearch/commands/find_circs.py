@@ -24,8 +24,9 @@ def find_circs(
     """
     console = Console()
 
-    with console.status("Searching for circular sequences...") as status:
+    with console.status("Searching for circular sequences..."):
         count = fc.find_circs(str(fasta), str(output))
         console.log(
-            f"[green]:heavy_check_mark:[/] Done finding circular sequences. {count} sequences written to {str(fasta.absolute())}."
+            f"[green]:heavy_check_mark:[/] Done finding circular sequences. "
+            f"{count} sequences written to {str(fasta.absolute())}."
         )

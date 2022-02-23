@@ -25,7 +25,10 @@ click.rich_click.COMMAND_GROUPS = {
     ]
 }
 click.rich_click.STYLE_HELPTEXT = ""
-click.rich_click.ERRORS_EPILOGUE = "[dim]If you have any questions or need help, please contact me at [cyan]https://benjamindlee.com"
+click.rich_click.ERRORS_EPILOGUE = (
+    "[dim]If you have any questions or need help, "
+    "please contact me at [cyan]https://benjamindlee.com"
+)
 
 
 class MyRichGroup(Group, DYMGroup):
