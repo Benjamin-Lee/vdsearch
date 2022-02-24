@@ -13,3 +13,4 @@ def download_cms():
     #     time.sleep(2)
     #     sp.succeed("Downloaded ribozyme CMs")
     print("downloading cms")
+    return "hey"

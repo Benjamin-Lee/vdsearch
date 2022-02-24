@@ -1,8 +1,8 @@
+import logging
 from pathlib import Path
 
 import nimporter
 import typer
-from rich.console import Console
 
 from ..nim import find_circs as fc
 from ..types import FASTA
@@ -19,14 +19,9 @@ def find_circs(
 
     This method is based on the following paper:
 
-    > Y. Qin *et al., “Reference-free and *de novo* Identification of Circular RNAs.”
+    > Y. Qin *et al.*, “Reference-free and *de novo* Identification of Circular RNAs.”
     > Cold Spring Harbor Laboratory, Apr. 23, 2020. doi: 10.1101/2020.04.21.050617.
     """
-    console = Console()
-
-    with console.status("Searching for circular sequences..."):
-        count = fc.find_circs(str(fasta), str(output))
-        console.log(
-            f"[green]:heavy_check_mark:[/] Done finding circular sequences. "
-            f"{count} sequences written to {str(fasta.absolute())}."
-        )
+    logging.info(f"Searching for circular sequences in {fasta}...")
+    count = fc.find_circs(str(fasta), str(output))
+    logging.done(f"{count} sequences remain.")

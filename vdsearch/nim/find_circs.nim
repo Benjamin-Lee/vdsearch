@@ -57,6 +57,6 @@ proc find_circs*(infile: string, outfile: string, seedLen: int = 10, minIdentity
     for record in readFasta[Dna](infile):
       monomerized = record.monomerize(seedLen, minIdentity)
       if monomerized.len > 0:
-        write(outfileFile, monomerized.asFasta())
+        writeLine(outfileFile, monomerized.asFasta())
         inc count
     return count
