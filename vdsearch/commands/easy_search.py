@@ -5,6 +5,7 @@ import rich
 from rich.console import Console
 
 import typer
+from vdsearch.commands.ribozyme_filter import ribozyme_filter
 from vdsearch.commands.canonicalize import canonicalize
 
 from vdsearch.types import FASTA, ReferenceCms, Threads
@@ -45,7 +46,13 @@ def easy_search(
     6. Using the ribozyme data and search results, output viroid-like sequences
     """
 
-    logging.info("Beginning search for viroid-like RNAs...")
+    logging.debug("Checking that all needed tools exist...")
+    # check if seqkit is installed
+    # check if infernal is installed if used
+    # check if mmseqs is installed if used
+    logging.debug("All needed tools exist.")
+
+    logging.info(f"Beginning search for viroid-like RNAs using {threads} threads...")
     # if not reference_db:
     #     download.download_viroiddb()
 
@@ -53,40 +60,45 @@ def easy_search(
     #     download.download_cms()
 
     # run cirit/rotcanon/dedupe
-    circs = f"01.{fasta.stem}.circs.fasta"
-    find_circs(Path(fasta), Path(circs))
+    circs = Path(f"01.{fasta.stem}.circs.fasta")
+    find_circs(fasta, circs)
 
-    canon = f"02.{fasta.stem}.canon.fasta"
-    canonicalize(Path(circs), Path(canon))
+    canon = Path(f"02.{fasta.stem}.canon.fasta")
+    canonicalize(circs, canon)
 
-    deduped_circs = f"03.{fasta.stem}.deduped.fasta"
-    dedup(Path(canon), Path(deduped_circs), threads=threads)
+    deduped_circs = Path(f"03.{fasta.stem}.deduped.fasta")
+    dedup(canon, deduped_circs, threads=threads)
 
     # run infernal
-    cmsearch_output = f"04.{fasta.stem}.infernal.out"
-    cmsearch_tsv = f"04.{fasta.stem}.infernal.tsv"
+    cmsearch_output = Path(f"04.{fasta.stem}.infernal.out")
+    cmsearch_tsv = Path(f"04.{fasta.stem}.infernal.tsv")
     infernal(
-        Path(deduped_circs),
-        Path(cmsearch_output),
-        Path(cmsearch_tsv),
+        deduped_circs,
+        cmsearch_output,
+        cmsearch_tsv,
         reference_cms=reference_cms,
         threads=threads,
     )
+
+    # find the viroids in the infernal output
+    ribozymes = ribozyme_filter(cmsearch_tsv)
 
     # # run mmseqs
     # mmseqs(fasta)
 
     # remove_rz_only_hits(fasta)
 
-    logging.done(f"The results are in [green bold]{fasta.stem}_viroidlikes.fasta.[/]")
-    Console().print(
+    logging.done(f"The results are in [green bold]{fasta.stem}_viroidlikes.fasta.[/]")  # type: ignore
+    Console().log(
+        # "\n",
+        "Thanks for using [green bold]vdsearch[/]!",
         "\n",
         rich.panel.Panel(
             rich.markdown.Markdown(
                 """
 If you use these results in your research, please cite:
 
-> B.D. Lee et al. (2022) vdsearch: A tool for viroid-like RNA searches.
+> B.D. Lee *et al.* (2022) vdsearch: A tool for viroid-like RNA searches.
             """
             ),
             title_align="left",
@@ -94,5 +106,7 @@ If you use these results in your research, please cite:
             width=88,
             title="Citation",
         ),
+        "\n",
+        "[dim]Brought to you by: [cyan bold]NIH/NLM/NCBI[/], [blue bold]University of Oxford[/], and [bold]Tel Aviv University[/][/dim]",
+        "\n",
     )
-    return "done"

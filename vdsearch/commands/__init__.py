@@ -5,4 +5,4 @@ from .cluster import cluster
 from .infernal import infernal
 from .easy_search import easy_search
 from .canonicalize import canonicalize
-from .ribozyme_filter import ribozyme_filter
+from .ribozyme_filter import ribozyme_filter, ribozyme_filter_wrapper
