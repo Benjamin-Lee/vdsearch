@@ -77,5 +77,6 @@ def ribozyme_filter_wrapper(
         help="Path to Infernal tabular output",
     )
 ):
+    """Using ribozyme search results, find viroid-like sequences."""
     logging.info(f"Reading Infernal tabular output from {infernal_tsv}...")
     ribozyme_filter(infernal_tsv)

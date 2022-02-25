@@ -28,7 +28,7 @@ def infernal(
     threads: int = Threads,
 ):
     """
-    Run Infernal cmsearch for provided covariance matricies.
+    Run Infernal cmsearch for provided covariance matrices.
     """
     if reference_cms is None:
         raise click.Abort(
