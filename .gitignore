@@ -154,3 +154,8 @@ cython_debug/
 # Nimporter stuff
 MANIFEST.in
 nim-extensions/
+
+# ignore root level output (probably needs to be removed once output is in a subdirectory)
+*.fasta
+*.tsv
+*.out
