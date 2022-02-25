@@ -1,15 +1,12 @@
 import logging
-import time
-from pathlib import Path
-from typing import List
 
+import rich
 import typer
-
+from rich.logging import RichHandler
 
 from . import commands
 from .internal import internal
 from .rich_wrapper import MyTyper
-from .types import FASTA
 
 
 # define the CLI app to use the custom Rich-enabled typer
@@ -23,7 +20,7 @@ app.command()(commands.cluster)  # type: ignore
 app.command()(commands.easy_search)  # type: ignore
 app.command()(commands.canonicalize)  # type: ignore
 app.command()(commands.infernal)  # type: ignore
-app.command()(commands.ribozyme_filter)  # type: ignore
+app.command("ribozyme-filter")(commands.ribozyme_filter_wrapper)  # type: ignore
 
 
 # Support for using --version
@@ -51,8 +48,19 @@ def main(
     """
     Workflows and utilities for finding and analyzing viroid-like circular RNAs.
     """
-    if verbose:
-        logging.basicConfig(level=logging.DEBUG)
+    level = logging.DEBUG if verbose else logging.INFO
+    # configure logging for the project to use Rich
+    console = rich.console.Console(
+        theme=rich.theme.Theme(
+            {"logging.level.done": "green", "logging.level.debug": "dim"}
+        )
+    )
+    logging.basicConfig(
+        level=level,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True, markup=True, console=console)],
+    )
 
 
 app.add_typer(internal.app, name="internal")

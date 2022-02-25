@@ -1,11 +1,8 @@
 import logging
-from pydoc import cli
 
-import rich
 import rich_click as click
 import typer
 from click_didyoumean import DYMGroup
-from rich.logging import RichHandler
 from rich_click import RichCommand as Command
 from rich_click import RichGroup as Group
 
@@ -53,7 +50,7 @@ class MyTyper(typer.Typer):
     def __init__(self, *args, cls=MyRichGroup, **kwargs) -> None:
         super().__init__(*args, cls=cls, **kwargs)
 
-    def command(self, *args, cls=Command, **kwargs) -> typer.Typer.command:
+    def command(self, *args, cls=Command, **kwargs) -> click.command:
         return super().command(*args, cls=cls, **kwargs)
 
 
@@ -109,12 +106,3 @@ def addLoggingLevel(levelName, levelNum, methodName=None):
 
 
 addLoggingLevel("DONE", logging.INFO + 5)
-
-# configure logging for the project to use Rich
-console = rich.console.Console(theme=rich.theme.Theme({"logging.level.done": "green"}))
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True, markup=True, console=console)],
-)
