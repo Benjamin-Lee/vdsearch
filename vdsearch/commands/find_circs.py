@@ -24,4 +24,4 @@ def find_circs(
     """
     logging.info(f"Searching for circular sequences in {fasta}...")
     count = fc.find_circs(str(fasta), str(output))
-    logging.done(f"{count} sequences remain.")
+    logging.done(f"{count} circRNAs found.")  # type: ignore
