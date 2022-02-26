@@ -91,8 +91,8 @@ def infernal(
         f"--cpu {threads} "
         f"--tblout {output_tsv} "
         f"{'--cut_ga ' if cut_ga else ''}"
-        f"{'--cut_tc ' if cut_nc else ''}"
-        f"{'--cut_nc ' if cut_tc else ''}"
+        f"{'--cut_tc ' if cut_tc else ''}"
+        f"{'--cut_nc ' if cut_nc else ''}"
         f"{'-E ' + str(evalue) + ' ' if evalue is not None and float(evalue) else ''}"
         f"-o {output} '{reference_cms}' {fasta}"
     )
