@@ -22,6 +22,12 @@ def check_executable_exists(
 
 
 def typer_unpacker(f: Callable):
+    """
+    Make a Typer function into a normal function.
+
+     from https://github.com/tiangolo/typer/issues/279#issuecomment-841875218
+    """
+
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         default_values = f.__defaults__
