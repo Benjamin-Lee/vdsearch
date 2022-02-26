@@ -1,10 +1,7 @@
 import logging
 from pathlib import Path
 import subprocess
-from numpy import absolute
 from rich.console import Console
-
-import typer
 
 from vdsearch.types import FASTA
 
