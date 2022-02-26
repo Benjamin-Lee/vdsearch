@@ -16,7 +16,7 @@ Threads: int = typer.Option(
 )
 
 ReferenceCms: Path = typer.Option(
-    None,
+    Path(typer.get_app_dir("vdsearch")) / "data" / "cms" / "merged",
     help="Path to Infernal ribozyme families. If none is provided, the latest ViroidDB will be used.",
     file_okay=True,
     dir_okay=False,

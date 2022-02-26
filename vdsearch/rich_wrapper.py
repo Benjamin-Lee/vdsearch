@@ -13,8 +13,8 @@ click.rich_click.COMMAND_GROUPS = {
     "vdsearch": [
         {"name": "Easy Workflows ([green]recommended[/])", "commands": ["easy-search"]},
         {
-            "name": "Download Datasets",
-            "commands": ["download-cms", "download-viroiddb"],
+            "name": "Dataset Management",
+            "commands": ["download-cms", "download-viroiddb", "purge"],
         },
         {
             "name": "Search Steps ([yellow]advanced[/])",
