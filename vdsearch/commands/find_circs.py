@@ -17,10 +17,15 @@ def find_circs(
     """
     Search for circular sequences.
 
+    ## References
+
     This method is based on the following paper:
 
-    > Y. Qin *et al.*, “Reference-free and *de novo* Identification of Circular RNAs.”
-    > Cold Spring Harbor Laboratory, Apr. 23, 2020. doi: 10.1101/2020.04.21.050617.
+    > Qin, Yangmei, Tingting Xu, Wenbo Lin, Qingjie Jia, Qiushun He, Ke Liu, Juan Du, *et al*.
+    > “Reference-Free and *de Novo* Identification of Circular RNAs”
+    > (Cold Spring Harbor Laboratory, April 2020).
+    > [https://doi.org/10.1101/2020.04.21.050617](https://doi.org/10.1101/2020.04.21.050617).
+
     """
     logging.info(f"Searching for circular sequences in {fasta}")
     count = fc.find_circs(str(fasta), str(output))
