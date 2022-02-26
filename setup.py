@@ -12,4 +12,12 @@ setup(
             "vdsearch = vdsearch.main:app",
         ],
     },
+    install_requires=[
+        "click-didyoumean",
+        "pandas",
+        "rich",
+        "rich_click",
+        "shellingham",
+        "typer",
+    ],
 )
