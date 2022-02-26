@@ -4,7 +4,7 @@ import click
 import typer
 
 from vdsearch.types import FASTA, Threads
-from ..utils import check_executable_exists
+from vdsearch.utils import check_executable_exists
 import logging
 
 

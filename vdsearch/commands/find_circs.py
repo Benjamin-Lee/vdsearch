@@ -4,8 +4,8 @@ from pathlib import Path
 import nimporter
 import typer
 
-from ..nim import find_circs as fc
-from ..types import FASTA
+from vdsearch.nim import find_circs as fc
+from vdsearch.types import FASTA
 
 
 def find_circs(

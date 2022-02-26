@@ -4,7 +4,7 @@ from rich.console import Console
 import typer
 
 from vdsearch.types import FASTA
-from ..nim import canonicalize as rotcanon
+from vdsearch.nim import canonicalize as rotcanon
 
 
 def canonicalize(
