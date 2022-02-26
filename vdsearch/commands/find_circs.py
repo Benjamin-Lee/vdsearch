@@ -22,6 +22,6 @@ def find_circs(
     > Y. Qin *et al.*, “Reference-free and *de novo* Identification of Circular RNAs.”
     > Cold Spring Harbor Laboratory, Apr. 23, 2020. doi: 10.1101/2020.04.21.050617.
     """
-    logging.info(f"Searching for circular sequences in {fasta}...")
+    logging.info(f"Searching for circular sequences in {fasta}")
     count = fc.find_circs(str(fasta), str(output))
     logging.done(f"{count} circRNAs found.")  # type: ignore
