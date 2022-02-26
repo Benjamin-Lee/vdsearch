@@ -48,12 +48,10 @@ def infernal(
     """
     Run Infernal cmsearch or cmscan for provided covariance matrices.
 
-
     ## Note
 
     Descriptions for **--cut-nc**, **--cut-tc** and **--cut-ga** are copied directly from [Infernal's manpage](http://eddylab.org/infernal/Userguide.pdf).
     Note also that, unlike in normal Infernal commands, the flags are kebab-case rather than snake_case.
-
 
     ## References
 
@@ -72,6 +70,9 @@ def infernal(
             "No reference CM provided. "
             "Currently unable to automatically retrieve one."
         )
+
+    # TODO: Trigger download of reference CM if not found.
+
     check_executable_exists(
         base_command,
         test_command=f"{base_command} -h",
