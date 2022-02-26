@@ -74,10 +74,11 @@ def easy_search(
     cmsearch_tsv = Path(f"04.{fasta.stem}.infernal.tsv")
     infernal(
         deduped_circs,
-        cmsearch_output,
-        cmsearch_tsv,
+        output=cmsearch_output,
+        output_tsv=cmsearch_tsv,
         reference_cms=reference_cms,
         threads=threads,
+        cmscan=False,
     )
 
     # find the viroids in the infernal output
@@ -88,10 +89,10 @@ def easy_search(
 
     # remove_rz_only_hits(fasta)
 
-    logging.done(f"The results are in [green bold]{fasta.stem}_viroidlikes.fasta.[/]")  # type: ignore
+    # logging.done(f"The results are in [green bold]{fasta.stem}_viroidlikes.fasta.[/]")  # type: ignore
     Console().log(
         # "\n",
-        "Thanks for using [green bold]vdsearch[/]!",
+        # "Thanks for using [green]vdsearch[/]!",
         "\n",
         rich.panel.Panel(
             rich.markdown.Markdown(
