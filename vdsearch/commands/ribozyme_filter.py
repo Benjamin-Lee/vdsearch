@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, Literal, Optional, Set
 
 import pandas as pd
+import rich
 import typer
 
 from vdsearch.types import ReferenceCms
@@ -196,7 +197,7 @@ def ribozyme_filter_wrapper(
 ):
     """Using ribozyme search results, find viroid-like sequences."""
     logging.info(f"Reading Infernal tabular output from {infernal_tsv}")
-    ribozyme_filter(
+    results = ribozyme_filter(
         infernal_tsv,
         use_cm_cutoff=use_cm_cutoff,
         cm_file=cm_file,
@@ -204,3 +205,15 @@ def ribozyme_filter_wrapper(
         use_evalue_cutoff=use_evalue_cutoff,
         max_evalue=max_evalue,
     )
+    table = rich.table.Table(highlight=True, title="Ribozyme Search Results")
+    table.add_column("Ribozyme", style="magenta")
+    table.add_column("(+) only count")
+    table.add_column("(+) and (-) count")
+
+    for ribozyme, ribozyme_df in results["ribozy_likes"].groupby(["ribozyme"]):
+        table.add_row(
+            f"{ribozyme}",
+            str(ribozyme_df.query("Polarity == '(+)'").seq_id.nunique()),
+            str(ribozyme_df.query("Polarity == '(+) and (-)'").seq_id.nunique()),
+        )
+    rich.get_console().log(table)
