@@ -57,6 +57,8 @@ def parse_cm_file(path: Path) -> Dict[str, Dict[str, float]]:
             elif line.startswith("NC"):
                 last_cutoff["NC"] = float(line.split()[1])
 
+        # at the end, we need to add the last one
+        cutoffs[last_name] = last_cutoff
     return cutoffs
 
 
