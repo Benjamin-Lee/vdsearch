@@ -1,6 +1,7 @@
 from enum import Enum
 import logging
 from pathlib import Path
+from sys import stderr
 from typing import Dict, Literal, Optional, Set
 
 import pandas as pd
@@ -205,17 +206,20 @@ def ribozyme_filter_wrapper(
         use_evalue_cutoff=use_evalue_cutoff,
         max_evalue=max_evalue,
     )
-    table = rich.table.Table(
-        highlight=True, title="Ribozyme Search Results", box=rich.box.ROUNDED
-    )
-    table.add_column("Ribozyme", style="magenta")
-    table.add_column("(+) only count")
-    table.add_column("(+) and (-) count")
+    # table = rich.table.Table(
+    #     highlight=True,
+    #     title="Ribozyme Search Results",
+    #     box=rich.box.ROUNDED,
+    #     show_footer=True,
+    # )
+    # table.add_column("Ribozyme", style="magenta", footer="Total")
+    # table.add_column("(+) only count", footer=f"{len(results['single_rzs'])}")
+    # table.add_column("(+) and (-) count", footer=f"{len(results['double_rzs'])}")
 
-    for ribozyme, ribozyme_df in results["ribozy_likes"].groupby(["ribozyme"]):
-        table.add_row(
-            f"{ribozyme}",
-            str(ribozyme_df.query("Polarity == '(+)'").seq_id.nunique()),
-            str(ribozyme_df.query("Polarity == '(+) and (-)'").seq_id.nunique()),
-        )
-    rich.get_console().log(table)
+    # for ribozyme, ribozyme_df in results["ribozy_likes"].groupby(["ribozyme"]):
+    #     table.add_row(
+    #         f"{ribozyme}",
+    #         str(ribozyme_df.query("Polarity == '(+)'").seq_id.nunique()),
+    #         str(ribozyme_df.query("Polarity == '(+) and (-)'").seq_id.nunique()),
+    #     )
+    # rich.get_console().log(table)
