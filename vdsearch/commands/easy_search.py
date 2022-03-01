@@ -59,15 +59,13 @@ def easy_search(
     # if not reference_cms:
     #     download.download_cms()
 
-    # run cirit/rotcanon/dedupe
+    # run cirit/rotcanon
     circs = Path(f"01.{fasta.stem}.circs.fasta")
-    find_circs(fasta, circs)
+    find_circs(fasta, circs, canonicalize=True)
 
-    canon = Path(f"02.{fasta.stem}.canon.fasta")
-    canonicalize(circs, canon)
-
+    # run dedup using seqkit
     deduped_circs = Path(f"03.{fasta.stem}.deduped.fasta")
-    dedup(canon, deduped_circs, threads=threads)
+    dedup(circs, deduped_circs, threads=threads)
 
     # run infernal
     cmsearch_output = Path(f"04.{fasta.stem}.infernal.out")

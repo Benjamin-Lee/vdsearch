@@ -2,6 +2,7 @@ import nimpy
 
 import bioseq
 import strutils
+from canonicalize import minimalCanonicalRotation
 
 
 func cirit(x: Dna, seedLen = 10, minIdentity=0.95): Dna = 
@@ -50,12 +51,14 @@ func monomerize(record: Record[Dna], seedLen=10, minIdentity=0.95): Record[Dna] 
 
   return toRecord[Dna](monomerized, record.description)
 
-proc find_circs*(infile: string, outfile: string, seedLen: int = 10, minIdentity: float = 0.95, reportMultimers: bool = false): int {.exportpy.} =
+proc find_circs*(infile: string, outfile: string, seedLen: int = 10, minIdentity: float = 0.95, reportMultimers: bool = false, canonicalize: bool = true): int {.exportpy.} =
     let outfileFile = open(outfile, fmWrite) # the output file as an opend File object
     var monomerized: Record[Dna]
     var count = 0
     for record in readFasta[Dna](infile):
       monomerized = record.monomerize(seedLen, minIdentity)
+      if canonicalize:
+        monomerized = toRecord[Dna](minimalCanonicalRotation(monomerized), monomerized.description)
       if monomerized.len > 0:
         writeLine(outfileFile, monomerized.asFasta())
         inc count
