@@ -1,4 +1,5 @@
 import logging
+import os
 
 import rich
 import typer
@@ -9,8 +10,12 @@ from .internal import internal
 from .rich_wrapper import MyTyper
 
 
-# define the CLI app to use the custom Rich-enabled typer
-app = MyTyper()
+# override for autocompletion to work
+if os.environ.get("_VDSEARCH_COMPLETE", None) is not None:
+    app = typer.Typer()
+else:
+    # define the CLI app to use the custom Rich-enabled typer
+    app = MyTyper()
 
 app.command()(commands.download_cms)  # type: ignore
 app.command()(commands.download_viroiddb)  # type: ignore
