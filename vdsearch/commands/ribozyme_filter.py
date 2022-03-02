@@ -1,11 +1,9 @@
 from enum import Enum
 import logging
 from pathlib import Path
-from sys import stderr
-from typing import Dict, Literal, Optional, Set
+from typing import Dict, Literal, Optional
 
 import pandas as pd
-import rich
 import typer
 
 from vdsearch.types import ReferenceCms
@@ -65,7 +63,7 @@ def parse_cm_file(path: Path) -> Dict[str, Dict[str, float]]:
 
 
 def ribozyme_filter(
-    infernal_tsv: Path,
+    infernal_tblout: Path,
     use_cm_cutoff: bool = True,
     cm_file: Optional[Path] = None,
     cm_cutoff_type: Literal["GA", "TC", "NC"] = "GA",
@@ -73,7 +71,7 @@ def ribozyme_filter(
     max_evalue: float = 0.01,
 ):
     ribozymes = pd.read_csv(
-        infernal_tsv,
+        infernal_tblout,
         delim_whitespace=True,
         comment="#",
         usecols=[0, 1, 2, 7, 8, 9, 14, 15, 16],
@@ -176,13 +174,17 @@ def ribozyme_filter(
 
 # We need to use a wrapper since, for some reason, returning values causes their return values to be printed
 def ribozyme_filter_wrapper(
-    infernal_tsv: Path = typer.Argument(
+    infernal_tblout: Path = typer.Argument(
         ...,
         file_okay=True,
         dir_okay=False,
         exists=True,
         readable=True,
         help="Path to Infernal tabular output",
+    ),
+    output_tsv: Path = typer.Option(
+        None,
+        help="Path to output TSV file with Infernal results for viroid-like sequences",
     ),
     use_cm_cutoff: bool = typer.Option(
         True, help="Use CM cutoffs to determine if a ribozyme is present."
@@ -197,15 +199,27 @@ def ribozyme_filter_wrapper(
     ),
 ):
     """Using ribozyme search results, find viroid-like sequences."""
-    logging.info(f"Reading Infernal tabular output from {infernal_tsv}")
+    logging.info(f"Reading Infernal tabular output from {infernal_tblout}")
     results = ribozyme_filter(
-        infernal_tsv,
+        infernal_tblout,
         use_cm_cutoff=use_cm_cutoff,
         cm_file=cm_file,
         cm_cutoff_type=cm_cutoff_type.value,
         use_evalue_cutoff=use_evalue_cutoff,
         max_evalue=max_evalue,
     )
+
+    outfile = (
+        output_tsv if output_tsv else Path(infernal_tblout.stem + ".viroidlike.tsv")
+    )
+    if results:
+        results["ribozy_likes"].sort_values(by="evalue").to_csv(
+            outfile,
+            sep="\t",
+            index=False,
+        )
+        logging.done(f"Wrote ribozyme data for viroid-like sequences to {outfile}")  # type: ignore
+
     # table = rich.table.Table(
     #     highlight=True,
     #     title="Ribozyme Search Results",

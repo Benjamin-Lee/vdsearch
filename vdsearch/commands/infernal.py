@@ -84,7 +84,7 @@ def infernal(
     if output is None:
         output = Path(fasta.stem + "." + base_command + ".out")
     if output_tsv is None:
-        output_tsv = Path(fasta.stem + "." + base_command + ".tsv")
+        output_tsv = Path(fasta.stem + "." + base_command + ".tblout")
 
     command = (
         f"{base_command} "
