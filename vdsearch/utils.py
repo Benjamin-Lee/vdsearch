@@ -1,21 +1,22 @@
 import functools
 import logging
 import shutil
-from typing import Callable
+from typing import Callable, Optional
 
-import click
 from typer.models import ParameterInfo
+import rich_click as click
 
 
 def check_executable_exists(
-    name: str, display_name: str = None, test_command: str = None
+    name: str, display_name: Optional[str] = None, test_command: str = None
 ):
     """
     Check if an executable exists in the system path.
     """
     if shutil.which(name) is None:
-        logging.error(f"Unable to find {display_name} executable.")
-        raise click.Abort(
+        logging.error(f"Unable to find {display_name or name} executable.")
+        click.rich_click.ERRORS_SUGGESTION = ""
+        raise click.ClickException(
             f"Unable to find {display_name or name} executable. Are you sure that it's installed? "
             f"To test if it is, run the following command: {test_command or name}"
         )
