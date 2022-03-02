@@ -7,3 +7,4 @@ from .easy_search import easy_search
 from .canonicalize import canonicalize
 from .ribozyme_filter import ribozyme_filter, ribozyme_filter_wrapper
 from .purge import purge
+from .write_seqs import write_seqs

@@ -9,14 +9,17 @@ from vdsearch.commands.ribozyme_filter import ribozyme_filter
 from vdsearch.commands.canonicalize import canonicalize
 
 from vdsearch.types import FASTA, ReferenceCms, Threads
+from vdsearch.utils import check_executable_exists
 from . import (
     download_cms,
     download_viroiddb,
     find_circs,
     dedup,
+    write_seqs,
     cluster,
     infernal,
 )
+from vdsearch.nim import write_seqs as ws
 
 
 def easy_search(
@@ -46,10 +49,11 @@ def easy_search(
     6. Using the ribozyme data and search results, output viroid-like sequences
     """
 
+    # preflight checks
     logging.debug("Checking that all needed tools exist...")
-    # check if seqkit is installed
-    # check if infernal is installed if used
-    # check if mmseqs is installed if used
+    check_executable_exists("seqkit")
+    check_executable_exists("cmsearch")
+    check_executable_exists("mmseqs")
     logging.debug("All needed tools exist.")
 
     logging.info(f"Beginning search for viroid-like RNAs using {threads} threads...")
@@ -80,7 +84,15 @@ def easy_search(
     )
 
     # find the viroids in the infernal output
-    ribozymes = ribozyme_filter(cmsearch_tsv)
+    ribozymes = ribozyme_filter(cmsearch_tsv, cm_file=reference_cms)
+    rz_seqs = Path(f"05.{fasta.stem}.ribozymes.fasta")
+    logging.info("Outputting viroid-like sequences...")
+    ws.write_seqs(
+        str(deduped_circs),
+        str(rz_seqs),
+        ribozymes["ribozy_likes"].seq_id.tolist(),
+    )
+    logging.done(f"Wrote to {rz_seqs}")  # type: ignore
 
     # # run mmseqs
     # mmseqs(fasta)

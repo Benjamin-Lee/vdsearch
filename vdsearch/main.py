@@ -22,7 +22,7 @@ app.command()(commands.canonicalize)  # type: ignore
 app.command()(commands.infernal)  # type: ignore
 app.command("ribozyme-filter")(commands.ribozyme_filter_wrapper)  # type: ignore
 app.command()(commands.purge)  # type: ignore
-
+app.command()(commands.write_seqs)  # type: ignore
 
 # Support for using --version
 # See https://github.com/tiangolo/typer/issues/52

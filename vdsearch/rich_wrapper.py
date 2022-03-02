@@ -24,6 +24,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "dedup",
                 "infernal",
                 "ribozyme-filter",
+                "write-seqs",
                 "cluster",
             ],
         },
