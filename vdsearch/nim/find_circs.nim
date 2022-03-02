@@ -38,28 +38,28 @@ func monomerize(record: Record[Dna], seedLen=10, minIdentity=0.95): Record[Dna] 
 
   # if not, go on
   if monomerized == Dna"":
-      return toRecord[Dna](monomerized, record.description)
+    return toRecord[Dna](monomerized, record.description)
 
   var newMonomer: Dna
   var mers = 2
   while monomerized != Dna"":
-      newMonomer = monomerized.cirit(seedLen, minIdentity)
-      if newMonomer == Dna"":
-        break
-      monomerized = newMonomer
-      inc mers
+    newMonomer = monomerized.cirit(seedLen, minIdentity)
+    if newMonomer == Dna"":
+      break
+    monomerized = newMonomer
+    inc mers
 
   return toRecord[Dna](monomerized, record.description)
 
 proc find_circs*(infile: string, outfile: string, seedLen: int = 10, minIdentity: float = 0.95, reportMultimers: bool = false, canonicalize: bool = true): int {.exportpy.} =
-    let outfileFile = open(outfile, fmWrite) # the output file as an opend File object
-    var monomerized: Record[Dna]
-    var count = 0
-    for record in readFasta[Dna](infile):
-      monomerized = record.monomerize(seedLen, minIdentity)
-      if canonicalize:
-        monomerized = toRecord[Dna](minimalCanonicalRotation(monomerized), monomerized.description)
-      if monomerized.len > 0:
-        writeLine(outfileFile, monomerized.asFasta())
-        inc count
-    return count
+  let outfileFile = open(outfile, fmWrite) # the output file as an opend File object
+  var monomerized: Record[Dna]
+  var count = 0
+  for record in readFasta[Dna](infile):
+    monomerized = record.monomerize(seedLen, minIdentity)
+    if canonicalize:
+      monomerized = toRecord[Dna](minimalCanonicalRotation(monomerized), monomerized.description)
+    if monomerized.len > 0:
+      writeLine(outfileFile, monomerized.asFasta())
+      inc count
+  return count
