@@ -89,6 +89,14 @@ def dbn2tsv(
         return result_df
 
 
+@app.command()
+def cache_path():
+    """
+    Return the path to the cache directory.
+    """
+    return Path(typer.get_app_dir("vdsearch"))
+
+
 @app.callback()
 def callback():
     """
