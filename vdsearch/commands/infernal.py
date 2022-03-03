@@ -57,10 +57,10 @@ def infernal(
 
     This method is based on the following paper:
 
-    > Nawrocki, E. P., and S. R. Eddy.
-    > “Infernal 1.1: 100-Fold Faster RNA Homology Searches.”
-    > Bioinformatics (Oxford University Press (OUP), September 2013).
-    > [https://doi.org/10.1093/bioinformatics/btt509](https://doi.org/10.1093/bioinformatics/btt509).
+    > Nawrocki, E.P., Eddy, S.R., 2013.
+    > Infernal 1.1: 100-fold faster RNA homology searches.
+    > Bioinformatics 29, 2933–2935.
+    > <https://doi.org/10.1093/bioinformatics/btt509>
     """
 
     base_command = "cmscan" if cmscan else "cmsearch"

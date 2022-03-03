@@ -24,10 +24,9 @@ def find_circs(
 
     This method is based on the following paper:
 
-    > Qin, Yangmei, Tingting Xu, Wenbo Lin, Qingjie Jia, Qiushun He, Ke Liu, Juan Du, *et al*.
-    > “Reference-Free and *de Novo* Identification of Circular RNAs”
-    > (Cold Spring Harbor Laboratory, April 2020).
-    > [https://doi.org/10.1101/2020.04.21.050617](https://doi.org/10.1101/2020.04.21.050617).
+    > Qin, Y., Xu, T., Lin, W., Jia, Q., He, Q., Liu, K., et al., 2020.
+    > Reference-free and *de novo* Identification of Circular RNAs (preprint).
+    > <https://doi.org/10.1101/2020.04.21.050617>
 
     """
     logging.info(f"Searching for circular sequences in {fasta}.")
