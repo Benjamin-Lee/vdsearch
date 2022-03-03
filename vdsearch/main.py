@@ -58,7 +58,11 @@ def main(
     # configure logging for the project to use Rich
     console = rich.console.Console(
         theme=rich.theme.Theme(
-            {"logging.level.done": "green", "logging.level.debug": "dim"}
+            {
+                "logging.level.done": "green",
+                "logging.level.debug": "dim",
+                "logging.level.warning": "yellow",
+            }
         )
     )
     logging.basicConfig(
