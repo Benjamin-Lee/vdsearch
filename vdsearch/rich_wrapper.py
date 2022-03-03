@@ -28,6 +28,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "cluster",
             ],
         },
+        {"name": "Analysis Steps ([yellow]advanced[/])", "commands": ["fold"]},
         {"name": "Internal ([red]dangerous[/])", "commands": ["internal"]},
     ]
 }
