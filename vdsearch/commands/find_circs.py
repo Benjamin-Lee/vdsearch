@@ -31,6 +31,6 @@ def find_circs(
 
     """
     logging.info(f"Searching for circular sequences in {fasta}.")
-    logging.debug(f" {'Will' if canonicalize else 'Will not'} canonicalize them.")
+    logging.debug(f"{'Will' if canonicalize else 'Will not'} canonicalize them.")
     count = fc.find_circs(str(fasta), str(output), canonicalize=canonicalize)
     logging.done(f"{count} circRNAs found.")  # type: ignore
