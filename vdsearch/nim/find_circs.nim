@@ -53,6 +53,7 @@ func monomerize(record: Record[Dna], seedLen=10, minIdentity=0.95): Record[Dna] 
 
 proc find_circs*(infile: string, outfile: string, seedLen: int = 10, minIdentity: float = 0.95, reportMultimers: bool = false, canonicalize: bool = true): int {.exportpy.} =
   let outfileFile = open(outfile, fmWrite) # the output file as an opend File object
+  defer: outfileFile.close()
   var monomerized: Record[Dna]
   var count = 0
   for record in readFasta[Dna](infile):
