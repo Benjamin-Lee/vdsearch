@@ -145,7 +145,7 @@ def easy_search(
     unique_cluster_count = pd.read_csv(
         cluster_tsv, sep="\t", names=["cluster_id", "seq_id"]
     ).cluster_id.nunique()
-    logging.done(f"{unique_cluster_count} viroid-like clusters found")  # type: ignore
+    logging.done(f"{unique_cluster_count} viroid-like sequences clusters found.")  # type: ignore
 
     # # run mmseqs
     # mmseqs(fasta)
