@@ -30,10 +30,10 @@ def fold(
     if output is None:
         logging.debug("Using default output filename.")
         output = Path(fasta).with_suffix(".dbn")
-        print(output)
 
     command = f"rnafold --circ --noPS --jobs={threads} --temp={temp} {fasta} > {output}"
     logging.debug(f"{command=}")
+    logging.info(f"Folding {fasta}")
     try:
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError as e:
