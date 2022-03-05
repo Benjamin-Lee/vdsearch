@@ -35,9 +35,12 @@ click.rich_click.COMMAND_GROUPS = {
 click.rich_click.STYLE_HELPTEXT = ""
 click.rich_click.ERRORS_EPILOGUE = (
     "[dim]If you have any questions or need help, "
-    "please contact me at [cyan]https://benjamindlee.com"
+    "please contact me at [blue]https://benjamindlee.com\n"
 )
-click.rich_click.FOOTER_TEXT = "This is the footer text."
+click.rich_click.STYLE_FOOTER_TEXT = "dim"
+click.rich_click.FOOTER_TEXT = (
+    "For more information, please visit <https://benjamindlee.com>\n"
+)
 
 
 class MyRichGroup(Group, DYMGroup):
