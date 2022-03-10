@@ -1,28 +1,21 @@
 import logging
-from pathlib import Path
 import shutil
-from turtle import title
+from pathlib import Path
+
 import click
 import pandas as pd
 import rich
+import typer
 from rich.console import Console
 
-import typer
+from vdsearch.commands.cluster import cluster
+from vdsearch.commands.dedup import dedup
+from vdsearch.commands.find_circs import find_circs
+from vdsearch.commands.infernal import infernal
 from vdsearch.commands.ribozyme_filter import ribozyme_filter
-from vdsearch.commands.canonicalize import canonicalize
-
+from vdsearch.nim import write_seqs as ws
 from vdsearch.types import FASTA, ReferenceCms, Threads
 from vdsearch.utils import check_executable_exists
-from . import (
-    download_cms,
-    download_viroiddb,
-    find_circs,
-    dedup,
-    write_seqs,
-    cluster,
-    infernal,
-)
-from vdsearch.nim import write_seqs as ws
 
 
 def easy_search(
