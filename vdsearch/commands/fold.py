@@ -25,7 +25,7 @@ def fold(
     > https://doi.org/10.1186/1748-7188-6-26
 
     """
-    check_executable_exists("rnafold", "ViennaRNA")
+    check_executable_exists("RNAfold", "ViennaRNA")
 
     if output is None:
         logging.debug("Using default output filename.")
