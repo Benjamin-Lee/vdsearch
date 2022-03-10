@@ -5,8 +5,10 @@ import typer
 
 from vdsearch.types import FASTA
 from vdsearch.nim import canonicalize as rotcanon
+from vdsearch.utils import typer_unpacker
 
 
+@typer_unpacker
 def canonicalize(
     fasta: Path = FASTA,
     output: Path = typer.Argument(

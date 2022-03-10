@@ -8,6 +8,7 @@ import rich
 import typer
 from rich.console import Console
 
+from vdsearch.commands.canonicalize import canonicalize
 from vdsearch.commands.cluster import cluster
 from vdsearch.commands.dedup import dedup
 from vdsearch.commands.find_circs import find_circs
@@ -28,6 +29,7 @@ def easy_search(
         dir_okay=False,
     ),
     reference_cms: Path = ReferenceCms,
+    assume_circular: bool = typer.Option(False, help="Assume circular sequences"),
     threads: int = Threads,
     force: bool = typer.Option(
         False,
@@ -82,6 +84,11 @@ def easy_search(
 
     # run cirit/rotcanon
     circs = outdir / Path(f"01.{fasta.stem}.circs.fasta")
+
+    if assume_circular:
+        logging.info("Assuming circular sequences.")
+        canonicalize(fasta, circs)
+
     if not circs.exists():
         find_circs(fasta, circs, canonicalize=True)
     else:
