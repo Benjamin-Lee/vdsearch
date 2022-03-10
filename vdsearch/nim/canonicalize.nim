@@ -17,5 +17,8 @@ proc minimalCanonicalRotation*(x:  Dna): Dna =
 proc canonicalize*(infile: string, outfile: string) {.exportpy.}=
   let outfileFile = open(outfile, fmWrite) # the output file as an opend File object
   defer: outfileFile.close()
+  var tmp = toRecord[Dna](Dna"", "") # only allocate a temporary record once
   for record in readFasta[Dna](infile):
-    writeLine outfileFile, toRecord[Dna](record.sequence.minimalCanonicalRotation, record.description).asFasta
+    tmp.sequence = record.sequence.minimalCanonicalRotation
+    tmp.description = record.description
+    writeLine outfileFile, tmp.asFasta
