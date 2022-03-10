@@ -31,7 +31,7 @@ def fold(
         logging.debug("Using default output filename.")
         output = Path(fasta).with_suffix(".dbn")
 
-    command = f"rnafold --circ --noPS --jobs={threads} --temp={temp} {fasta} > {output}"
+    command = f"RNAfold --circ --noPS --jobs={threads} --temp={temp} {fasta} > {output}"
     logging.debug(f"{command=}")
     logging.info(f"Folding {fasta}")
     try:
