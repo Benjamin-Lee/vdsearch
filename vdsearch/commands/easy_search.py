@@ -128,7 +128,10 @@ def easy_search(
     cluster_tsv = outdir / Path(f"06.{fasta.stem}.cluster.tsv")
     if not cluster_tsv.exists():
         cluster(rz_seqs, tmpdir=mmseqs_tmpdir, threads=threads)
-        Path("clu_cluster.tsv").rename(cluster_tsv)
+        # rename the cluster file to the expected name
+        # we have to use shutil.move since there might be filesystem issues on clusters
+        # Python < 3.9 doesn't support Pathlib for shutil.move so we have to use str() :(
+        shutil.move(str(Path("clu_cluster.tsv")), str(cluster_tsv))
         logging.debug("Cleaning up temporary files from clustering...")
         shutil.rmtree(mmseqs_tmpdir)
     else:
