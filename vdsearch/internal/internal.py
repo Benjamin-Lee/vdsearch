@@ -231,7 +231,7 @@ def summarize(
         new_id = (
             "NV_" + hashlib.blake2b(str(seq).encode("utf-8"), digest_size=8).hexdigest()
         )
-        seq_data["new_id"] = new_id
+        seq_data["vdsearch_id"] = new_id
         seq_id_to_new_id[seq_id] = new_id
         sequences[new_id] = seq_data
 
@@ -255,7 +255,26 @@ def summarize(
     #                 / sequences[seq_id_to_new_id[seq.metadata["id"]]]["unit_length"]
     #             )
 
-    pd.DataFrame(sequences).T.to_csv(outfile, sep="\t", index=False)
+    pd.DataFrame.from_dict(sequences, orient="index")[
+        [
+            "vdsearch_id",
+            "seq_id",
+            "source",
+            "unit_length",
+            "gc_content",
+            "has_ribozymes",
+            "rz_polarity",
+            "rz_plus",
+            "rz_minus",
+            "rz_plus_evalue",
+            "rz_minus_evalue",
+            "mfe",
+            "paired_percent",
+            "hairpins",
+            "seq",
+            "structure",
+        ]
+    ].to_csv(outfile, sep="\t", index=False)
 
 
 @app.callback()
