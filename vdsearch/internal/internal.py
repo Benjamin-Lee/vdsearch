@@ -1,19 +1,24 @@
+import hashlib
 import logging
 from pathlib import Path
 from typing import Optional
 
 import nimporter
+from numpy import product
 import pandas as pd
+import skbio
 import typer
-from rich.console import Console
+from rich.progress import Progress
 from vdsearch.nim import write_seqs as ws
 from vdsearch.rich_wrapper import MyTyper
 from vdsearch.types import FASTA
+from vdsearch.utils import typer_unpacker
 
 app = MyTyper(hidden=True)
 
 
 @app.command()
+@typer_unpacker
 def dbn2tsv(
     dbn: Path = typer.Argument(
         ...,
@@ -132,6 +137,125 @@ def clusters2fastas(
     ws.write_clusters(str(fasta), str(outdir), seq_to_cluster, clusters)
 
     logging.done(f"Wrote {len(clusters)} cluster FASTA files to {outdir}")  # type: ignore
+
+
+# rank sequences by their multiplied ribozyme E values
+@app.command()
+def rank_by_ribozyme(
+    infernal_tsv: Path = typer.Argument(..., help="Path to infernal TSV file"),
+    outfile: Path = typer.Argument(
+        ...,
+        dir_okay=False,
+        file_okay=True,
+        help="Path to output file",
+    ),
+):
+    """
+    Rank sequences by their multiplied ribozyme E values.
+    """
+    df = pd.read_csv(infernal_tsv, sep="\t")
+    outdf = []
+    for seq_name, seq_df in df.groupby(["seq_id"]):
+
+        e_values = []
+
+        for pol in ["+", "-"]:
+            e_values.extend(
+                seq_df.query(f"strand == '{pol}'")
+                .sort_values(by=["evalue"], ascending=True)
+                .drop_duplicates(subset=["seq_id"], keep="first")
+                .evalue.values
+            )
+
+        outdf.append(dict(seq_id=seq_name, evalue=product(e_values)))
+    pd.DataFrame(outdf, columns=["seq_id", "evalue"]).sort_values(
+        by=["evalue"], ascending=True
+    ).to_csv(outfile, sep="\t", index=False)
+
+
+@app.command()
+def summarize(
+    fasta: Path = FASTA,
+    ribozyme_tsv: Path = typer.Argument(..., help="Path to ribozyme TSV file"),
+    dbn: Path = typer.Argument(..., help="Path to structure dbn file"),
+    # raw_fasta: Path = FASTA,
+    source: str = typer.Argument(..., help="Source of the sequences"),
+    outfile: Path = typer.Argument(..., help="Path to output file"),
+):
+    """
+    Summarize the results of the analysis.
+    """
+
+    sequences = {}
+    seq_id_to_new_id = {}
+    ribozymes_df = pd.read_csv(ribozyme_tsv, sep="\t")
+    dbn_df = dbn2tsv(dbn)
+
+    seq: skbio.DNA
+    for i, seq in enumerate(
+        skbio.read(str(fasta), format="fasta", constructor=skbio.DNA)
+    ):
+        seq_data = {}
+
+        seq_id = seq.metadata["id"]
+
+        # basic sequence information
+        seq_data["seq_id"] = seq_id
+        seq_data["unit_length"] = len(seq)
+        seq_data["gc_content"] = seq.gc_content()
+
+        seq_ribozymes = ribozymes_df.query(f"seq_id == '{seq_id}'").sort_values(
+            by=["evalue"], ascending=True
+        )
+        seq_data["has_ribozymes"] = bool(len(seq_ribozymes))
+        seq_data["rz_polarity"] = seq_ribozymes.Polarity.unique()[0]
+
+        rzs_present = [
+            seq_ribozymes.loc[seq_ribozymes.strand == strand] for strand in ["+", "-"]
+        ]
+        # print(rzs_present)
+        if rzs_present[0].shape[0]:
+            seq_data["rz_plus"] = rzs_present[0].ribozyme.values[0]
+            seq_data["rz_plus_evalue"] = rzs_present[0].evalue.values[0]
+        if rzs_present[1].shape[0]:
+            seq_data["rz_minus"] = rzs_present[1].ribozyme.values[0]
+            seq_data["rz_minus_evalue"] = rzs_present[1].evalue.values[0]
+
+        # merge in
+        seq_data.update(
+            dbn_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
+        )
+
+        seq_data["source"] = source
+
+        new_id = (
+            "NV_" + hashlib.blake2b(str(seq).encode("utf-8"), digest_size=8).hexdigest()
+        )
+        seq_data["new_id"] = new_id
+        seq_id_to_new_id[seq_id] = new_id
+        sequences[new_id] = seq_data
+
+    # find the original lengths
+    # with Progress() as progress:
+    #     task_id = progress.add_task(
+    #         "Finding lengths from raw FASTA", total=len(sequences)
+    #     )
+    #     for seq in skbio.read(str(raw_fasta), "fasta", constructor=skbio.DNA):
+    #         if seq.metadata["id"] in seq_id_to_new_id:
+    #             progress.update(task_id=task_id, advance=1)
+    #             sequences[seq_id_to_new_id[seq.metadata["id"]]]["contig_length"] = len(
+    #                 seq
+    #             )
+
+    #             # include length ratio
+    #             sequences[seq_id_to_new_id[seq.metadata["id"]]][
+    #                 "contig_length_ratio"
+    #             ] = (
+    #                 len(seq)
+    #                 / sequences[seq_id_to_new_id[seq.metadata["id"]]]["unit_length"]
+    #             )
+
+    pd.DataFrame(sequences).T.to_csv(outfile, sep="\t", index=False)
 
 
 @app.callback()
