@@ -51,6 +51,7 @@ def rnamotif(
         os.environ.get("EFNDATA")
         or resource_filename(__name__, "data/rnamotif/efndata")
     )
+    logging.debug(f"Using efndata directory: {efndata}")
     if not efndata.exists() or not efndata.is_dir():
         raise FileNotFoundError(
             "Could not find RNAmotif efndata directory. "
