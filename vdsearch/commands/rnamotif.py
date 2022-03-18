@@ -49,7 +49,7 @@ def rnamotif(
 
     efndata = Path(
         os.environ.get("EFNDATA")
-        or resource_filename(__name__, "data/rnamotif/efndata")
+        or resource_filename("vdsearch", "data/rnamotif/efndata")
     )
     logging.debug(f"Using efndata directory: {efndata}")
     if not efndata.exists() or not efndata.is_dir():
