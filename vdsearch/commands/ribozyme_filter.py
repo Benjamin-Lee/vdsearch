@@ -64,6 +64,7 @@ def parse_cm_file(path: Path) -> Dict[str, Dict[str, float]]:
 
 def ribozyme_filter(
     infernal_tblout: Path,
+    output_tsv: Optional[Path] = None,
     use_cm_cutoff: bool = True,
     cm_file: Optional[Path] = None,
     cm_cutoff_type: Literal["GA", "TC", "NC"] = "GA",
@@ -165,6 +166,13 @@ def ribozyme_filter(
     double_rzs = ribozymes.loc[ribozymes.seq_id.isin(double_rz_ids)]
     ribozy_likes = ribozymes.loc[ribozymes.seq_id.isin(ribozy_likes_ids)]
 
+    if ribozy_likes.shape[0] and output_tsv:
+        ribozy_likes.sort_values(by="evalue").to_csv(
+            output_tsv,
+            sep="\t",
+            index=False,
+        )
+
     return {
         "single_rzs": single_rzs,
         "double_rzs": double_rzs,
@@ -200,25 +208,16 @@ def ribozyme_filter_wrapper(
 ):
     """Using ribozyme search results, find viroid-like sequences."""
     logging.info(f"Reading Infernal tabular output from {infernal_tblout}")
-    results = ribozyme_filter(
+    ribozyme_filter(
         infernal_tblout,
+        output_tsv=output_tsv,
         use_cm_cutoff=use_cm_cutoff,
         cm_file=cm_file,
         cm_cutoff_type=cm_cutoff_type.value,
         use_evalue_cutoff=use_evalue_cutoff,
         max_evalue=max_evalue,
     )
-
-    outfile = (
-        output_tsv if output_tsv else Path(infernal_tblout.stem + ".viroidlike.tsv")
-    )
-    if results:
-        results["ribozy_likes"].sort_values(by="evalue").to_csv(
-            outfile,
-            sep="\t",
-            index=False,
-        )
-        logging.done(f"Wrote ribozyme data for viroid-like sequences to {outfile}")  # type: ignore
+    logging.done(f"Wrote ribozyme data for viroid-like sequences to {output_tsv}")  # type: ignore
 
     # table = rich.table.Table(
     #     highlight=True,

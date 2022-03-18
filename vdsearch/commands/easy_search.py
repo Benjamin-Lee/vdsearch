@@ -103,12 +103,12 @@ def easy_search(
 
     # run infernal
     cmsearch_output = outdir / Path(f"04.{fasta.stem}.infernal.out")
-    cmsearch_tsv = outdir / Path(f"04.{fasta.stem}.infernal.tsv")
-    if not cmsearch_output.exists() and not cmsearch_tsv.exists():
+    cmsearch_tblout = outdir / Path(f"04.{fasta.stem}.infernal.tblout")
+    if not cmsearch_output.exists() or not cmsearch_tblout.exists():
         infernal(
             deduped_circs,
             output=cmsearch_output,
-            output_tsv=cmsearch_tsv,
+            output_tsv=cmsearch_tblout,
             reference_cms=reference_cms,
             threads=threads,
             cmscan=False,
@@ -118,8 +118,11 @@ def easy_search(
 
     # find the viroids in the infernal output
     rz_seqs = outdir / Path(f"05.{fasta.stem}.ribozymes.fasta")
-    if not rz_seqs.exists():
-        ribozymes = ribozyme_filter(cmsearch_tsv, cm_file=reference_cms)
+    viroidlike_rzs = outdir / Path(f"05.{fasta.stem}.viroidlike.fasta")
+    if not rz_seqs.exists() or not viroidlike_rzs.exists():
+        ribozymes = ribozyme_filter(
+            cmsearch_tblout, output_tsv=viroidlike_rzs, cm_file=reference_cms
+        )
         logging.info("Outputting viroid-like sequences...")
         ws.write_seqs(
             str(deduped_circs),
@@ -133,12 +136,18 @@ def easy_search(
     # run clustering
     mmseqs_tmpdir = Path("mmseqstmp")
     cluster_tsv = outdir / Path(f"06.{fasta.stem}.cluster.tsv")
-    if not cluster_tsv.exists():
+    rep_seqs = outdir / Path(f"06.{fasta.stem}.cluster.fasta")
+    if not cluster_tsv.exists() or not rep_seqs.exists():
         cluster(rz_seqs, tmpdir=mmseqs_tmpdir, threads=threads)
         # rename the cluster file to the expected name
         # we have to use shutil.move since there might be filesystem issues on clusters
         # Python < 3.9 doesn't support Pathlib for shutil.move so we have to use str() :(
         shutil.move(str(Path("clu_cluster.tsv")), str(cluster_tsv))
+        shutil.move(str(Path("clu_rep_seq.fasta")), str(rep_seqs))
+
+        # remove the weird pseudo-FASTA formatted cluster file
+        Path("clu_all_seqs.fasta").unlink()
+
         logging.debug("Cleaning up temporary files from clustering...")
         shutil.rmtree(mmseqs_tmpdir)
     else:
