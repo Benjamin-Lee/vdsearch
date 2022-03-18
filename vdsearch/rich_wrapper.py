@@ -23,6 +23,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "canonicalize",
                 "dedup",
                 "infernal",
+                "rnamotif",
                 "ribozyme-filter",
                 "write-seqs",
                 "cluster",

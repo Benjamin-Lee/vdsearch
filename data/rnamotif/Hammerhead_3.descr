@@ -1,0 +1,185 @@
+#####################################################################################
+# rnamotif descriptor for type III hammerheads
+#####################################################################################
+
+parms
+
+ wc += gu;
+
+
+descr
+
+h5 (minlen=3, maxlen=12, seq="u$")
+  ss (len=1, seq="h")
+  h5 (minlen=3, maxlen=12)
+    ss (minlen=3, maxlen=100)
+  h3
+   ss (minlen=7, maxlen=8, seq="^cuganga")
+  h5 (minlen=2, maxlen=12)
+    ss (minlen=3, maxlen=100)
+  h3
+   ss (len=3, seq="gaa")
+  h3 (seq="^a")
+
+ ss (len=10)
+
+
+########################################################################################
+# scoring rules, minimum (best) score is 3, worst is 20, anything above 13 is rejected
+########################################################################################
+
+score
+{
+  SCORE = 20;
+  total_bonus = 0;
+
+len=length( h5[1] );
+if(len>3){
+ total_bonus--;
+}
+len=length( h5[3] );
+if(len>3){
+total_bonus--;
+}
+len=length( h5[7] );
+if(len>3){
+ total_bonus--;
+}
+
+
+len=length( h5[1] );
+if(len>5){
+ total_bonus--;
+}
+len=length( h5[3] );
+if(len>5){
+total_bonus--;
+}
+len=length( h5[7] );
+if(len>5){
+ total_bonus--;
+}
+
+len=length(ss[4]);
+if(len<7){
+ total_bonus--;
+}
+len=length(ss[8]);
+if(len<7){
+ total_bonus--;
+}
+
+
+len=length(ss[6]);
+if(len==7){
+ total_bonus--;
+}
+
+
+len=length(ss[4]);
+if(len<20){
+ total_bonus--;
+}
+len=length(ss[8]);
+if(len<20){
+ total_bonus--;
+}
+
+len=length(ss[4]);
+if(len<10){
+ total_bonus--;
+}
+len=length(ss[8]);
+if(len<10){
+ total_bonus--;
+}
+
+if(total_bonus > -7){
+ REJECT;
+}
+
+#look if too much wobbles
+
+len=length( h5[1] );
+i=0;
+g=0;
+c=0;
+while(i<len){
+ if(h5[1,i,1]=="g"){
+  g++;
+ }
+ if(h5[1,i,1]=="c"){
+  c++;
+ }
+ if(h3[11,i,1]=="g"){
+  g++;
+ }
+ if(h3[11,i,1]=="c"){
+  c++;
+ }
+if(g>0) {
+ if((c/g)<0.7){
+  total_bonus++;
+ }
+}
+ i++;
+}
+
+len=length( h5[3] );
+i=0;
+g=0;
+c=0;
+while(i<len){
+ if(h5[3,i,1]=="g"){
+  g++;
+ }
+ if(h5[3,i,1]=="c"){
+  c++;
+ }
+ if(h3[5,i,1]=="g"){
+  g++;
+ }
+ if(h3[5,i,1]=="c"){
+  c++;
+ }
+if(g>0) {
+ if((c/g)<0.7){
+  total_bonus++;
+ }
+}
+ i++;
+}
+
+len=length( h5[7] );
+i=0;
+g=0;
+c=0;
+while(i<len){
+ if(h5[7,i,1]=="g"){
+  g++;
+ }
+ if(h5[7,i,1]=="c"){
+  c++;
+ }
+ if(h3[9,i,1]=="g"){
+  g++;
+ }
+ if(h3[9,i,1]=="c"){
+  c++;
+ }
+if(g>0) {
+ if((c/g)<0.7){
+  total_bonus++;
+ }
+}
+ i++;
+}
+
+
+if(total_bonus > -7){
+ REJECT;
+}
+
+SCORE = SCORE + total_bonus;
+}
+

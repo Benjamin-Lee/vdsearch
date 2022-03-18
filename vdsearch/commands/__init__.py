@@ -8,4 +8,5 @@ from .fold import fold
 from .infernal import infernal
 from .purge import purge
 from .ribozyme_filter import ribozyme_filter, ribozyme_filter_wrapper
+from .rnamotif import rnamotif
 from .write_seqs import write_seqs
