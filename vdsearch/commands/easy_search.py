@@ -90,7 +90,7 @@ def easy_search(
         canonicalize(fasta, circs)
 
     if not circs.exists():
-        find_circs(fasta, circs, canonicalize=True)
+        find_circs(fasta, circs, canonicalize=True, tsv=True, min_len=100)
     else:
         logging.warning("CircRNAs already found. Skipping.")
 

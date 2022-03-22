@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import sys
 
 import nimporter
 import typer
@@ -16,6 +17,16 @@ def find_circs(
     canonicalize: bool = typer.Option(
         True, help="Output canonicalized sequences instead of raw sequences"
     ),
+    tsv: bool = typer.Option(
+        True,
+        help="Output a .tsv file with the ratio between the length of the original sequence and its monomerized version. If present, the output file will be named <output>.tsv",
+    ),
+    min_len: int = typer.Option(
+        1, help="Minimum length of the monomer to be included in the output"
+    ),
+    max_len: int = typer.Option(
+        sys.maxsize, help="Maximum length of the monomer to be included in the output"
+    ),
 ):
     """
     Search for circular sequences.
@@ -31,5 +42,13 @@ def find_circs(
     """
     logging.info(f"Searching for circular sequences in {fasta}.")
     logging.debug(f"{'Will' if canonicalize else 'Will not'} canonicalize them.")
-    count = fc.find_circs(str(fasta), str(output), canonicalize=canonicalize)
-    logging.done(f"{count} circRNAs found.")  # type: ignore
+    logging.debug(f"Only monomers of length {min_len} to {max_len} will be included.")
+    count = fc.find_circs(
+        str(fasta),
+        str(output),
+        canonicalize=canonicalize,
+        outTsv=tsv,
+        minLen=min_len,
+        maxLen=max_len,
+    )
+    logging.done(f"{count[0]:,} circRNAs found from {count[1]:,} sequences ({count[1] / (count[2] / 1000.0):,.0f} seqs/sec).")  # type: ignore

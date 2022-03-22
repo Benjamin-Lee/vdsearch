@@ -1,5 +1,5 @@
 import nimpy
-
+import std/[os, monotimes, times]
 import bioseq
 import strutils
 from canonicalize import minimalCanonicalRotation
@@ -41,26 +41,56 @@ func monomerize(record: Record[Dna], seedLen=10, minIdentity=0.95): Record[Dna] 
     return toRecord[Dna](monomerized, record.description)
 
   var newMonomer: Dna
-  var mers = 2
   while monomerized != Dna"":
     newMonomer = monomerized.cirit(seedLen, minIdentity)
     if newMonomer == Dna"":
       break
     monomerized = newMonomer
-    inc mers
 
   return toRecord[Dna](monomerized, record.description)
 
-proc find_circs*(infile: string, outfile: string, seedLen: int = 10, minIdentity: float = 0.95, reportMultimers: bool = false, canonicalize: bool = true): int {.exportpy.} =
+proc find_circs*(infile: string,
+                 outfile: string,
+                 seedLen: Natural = 10,
+                 minIdentity: float = 0.95,
+                 canonicalize: bool = true,
+                 outTsv: bool = true,
+                 minLen: Natural = 1,
+                 maxLen: Natural = high(int),
+                ): (int, int, int) {.exportpy.} =
+
   let outfileFile = open(outfile, fmWrite) # the output file as an opend File object
   defer: outfileFile.close()
+
+  var outTsvFile: File
+  defer: outTsvFile.close()
+
+  if outTsv:
+    outTsvFile = open(changeFileExt(outfile, "tsv"), fmWrite) # the output file as an opend File object
+    outTsvFile.writeLine("id", "\t", "ratio", "\t", "original_len", "\t", "monomerized_len")
+
   var monomerized: Record[Dna]
   var count = 0
+  var total = 0
+  var originalLen = 0
+  let startTime = getMonoTime()
+
   for record in readFasta[Dna](infile):
+    originalLen = record.len
     monomerized = record.monomerize(seedLen, minIdentity)
+
     if canonicalize:
       monomerized = toRecord[Dna](minimalCanonicalRotation(monomerized), monomerized.description)
-    if monomerized.len > 0:
+
+    if minLen <= monomerized.len and monomerized.len <= maxLen:
       writeLine(outfileFile, monomerized.asFasta())
       inc count
-  return count
+      
+      # Write out the ratio between the original and monomerized sequence length to a TSV file
+      # This is useful since finding the original might take a long time
+      if outTsv:
+        writeLine(outTsvFile, monomerized.description, "\t", originalLen / monomerized.len, "\t", originalLen, "\t", monomerized.len)
+    
+    inc total
+
+  return (count: count, total: total, duration: (getMonoTime() - startTime).inMilliseconds.int)
