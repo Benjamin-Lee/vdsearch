@@ -156,6 +156,9 @@ MANIFEST.in
 nim-extensions/
 
 # ignore root level output (probably needs to be removed once output is in a subdirectory)
-*.fasta
-*.tsv
-*.out
+**/*.fasta
+**/*.tsv
+**/*.out
+**/*.tblout
+**/*.dbn
+**/*.vdsearch.lock
