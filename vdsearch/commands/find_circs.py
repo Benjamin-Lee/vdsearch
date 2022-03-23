@@ -64,7 +64,7 @@ def find_circs(
         f"Only monomers of length {min_len} to {max_len} will be monomerized. "
         f"Only monomers less than {max_monomer_len} nt will be d."
     )
-    count = fc.find_circs(
+    circs = fc.find_circs(
         str(fasta),
         str(output),
         canonicalize=canonicalize,
@@ -74,4 +74,7 @@ def find_circs(
         maxMonomerLen=max_monomer_len,
         verbose=logging.getLogger().isEnabledFor(logging.DEBUG),
     )
-    logging.done(f"{count[0]:,} circRNAs found from {count[1]:,} sequences ({(count[2] / 1000000) / (count[3] / 1000.0):,.0f} Mbp/sec).")  # type: ignore
+    # we do the max(circs[3], 1) to avoid division by zero when the time is 0ms
+    mbp_per_sec = (circs[2] / 1000000) / (max(circs[3], 1) / 1000.0)
+
+    logging.done(f"{circs[0]:,} circRNAs found from {circs[1]:,} sequences ({mbp_per_sec:,.0f} Mbp/sec).")  # type: ignore
