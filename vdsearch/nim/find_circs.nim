@@ -108,10 +108,12 @@ proc find_circs*(infile: string,
     
     monomerized = record.monomerize(seedLen, minIdentity)
 
-    if canonicalize:
-      monomerized = toRecord[Dna](minimalCanonicalRotation(monomerized), monomerized.description)
-
     if minLen <= monomerized.len and monomerized.len <= maxMonomerLen:
+      
+      # we only pay the price of canonicalizing if we're going to output
+      if canonicalize:
+        monomerized = toRecord[Dna](minimalCanonicalRotation(monomerized), monomerized.description)
+
       writeLine(outfileFile, monomerized.asFasta())
       inc count
       
