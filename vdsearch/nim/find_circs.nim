@@ -103,6 +103,9 @@ proc find_circs*(infile: string,
     if originalLen < minLen or originalLen > maxLen:
       continue
 
+    # we have to capitalize because the input is not always uppercase
+    record.sequence = record.sequence.string.toUpperAscii().Dna
+    
     monomerized = record.monomerize(seedLen, minIdentity)
 
     if canonicalize:
