@@ -29,6 +29,9 @@ proc canonicalize*(infile: string, outfile: string, minLen: Natural = 1, maxLen:
     if record.len < minLen or record.len > maxLen:
       continue
 
+    # we capitalize since otherwise it breaks rev comp
+    record.sequence = record.sequence.string.toUpperAscii().Dna
+    
     tmp.sequence = record.sequence.minimalCanonicalRotation
     tmp.description = record.description
     writeLine outfileFile, tmp.asFasta
