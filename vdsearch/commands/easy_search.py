@@ -87,10 +87,18 @@ def easy_search(
 
     if assume_circular:
         logging.info("Assuming circular sequences.")
-        canonicalize(fasta, circs)
+        canonicalize(fasta, circs, min_len=100, max_len=3000)
 
     if not circs.exists():
-        find_circs(fasta, circs, canonicalize=True, tsv=True, min_len=100)
+        find_circs(
+            fasta,
+            circs,
+            canonicalize=True,
+            tsv=True,
+            min_len=100,
+            max_monomer_len=3000,
+            max_len=6000,
+        )
     else:
         logging.warning("CircRNAs already found. Skipping.")
 
@@ -117,8 +125,8 @@ def easy_search(
         logging.warning("Infernal already run. Skipping.")
 
     # find the viroids in the infernal output
-    rz_seqs = outdir / Path(f"05.{fasta.stem}.ribozymes.fasta")
-    viroidlike_rzs = outdir / Path(f"05.{fasta.stem}.viroidlike.fasta")
+    rz_seqs = outdir / Path(f"05.{fasta.stem}.viroidlike.fasta")
+    viroidlike_rzs = outdir / Path(f"05.{fasta.stem}.viroidlike.tsv")
     if not rz_seqs.exists() or not viroidlike_rzs.exists():
         ribozymes = ribozyme_filter(
             cmsearch_tblout, output_tsv=viroidlike_rzs, cm_file=reference_cms

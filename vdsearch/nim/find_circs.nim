@@ -1,7 +1,6 @@
 import nimpy
-import std/[os, monotimes, times]
+import std/[os, monotimes, times, strformat, strutils]
 import bioseq
-import strutils
 from canonicalize import minimalCanonicalRotation
 
 
@@ -57,7 +56,13 @@ proc find_circs*(infile: string,
                  outTsv: bool = true,
                  minLen: Natural = 1,
                  maxLen: Natural = high(int),
-                ): (int, int, int) {.exportpy.} =
+                 maxMonomerLen: Natural = high(int),
+                 verbose: bool = false
+                ): (int, int, int, int) {.exportpy.} =
+
+  # Warn the user if they compiled wrong
+  if not defined(danger):
+    echo "Not compiled with -d:danger. This will likely cause severe slowdowns."
 
   let outfileFile = open(outfile, fmWrite) # the output file as an opend File object
   defer: outfileFile.close()
@@ -70,19 +75,40 @@ proc find_circs*(infile: string,
     outTsvFile.writeLine("id", "\t", "ratio", "\t", "original_len", "\t", "monomerized_len")
 
   var monomerized: Record[Dna]
-  var count = 0
-  var total = 0
   var originalLen = 0
+
+  # tracking variables
+  var count = 0
+  var totalSeqs = 0
+  var totalBases = 0
+  var lastBaseCount = 0
   let startTime = getMonoTime()
 
-  for record in readFasta[Dna](infile):
+  let infileFile = if infile == "-": stdin else: open(infile, fmRead) # the input file as an opend File object
+  defer: infileFile.close()
+
+  for record in readFasta[Dna](infileFile):
+
+    inc totalSeqs
+    totalBases.inc(record.len)
+
+    if verbose and totalSeqs mod 10000000 == 0:
+      let elapsed = (getMonoTime() - startTime).inMilliseconds.int
+      let rate = (((totalBases - lastBaseCount).float / 1000000) / (elapsed / 1000)).int # the number of Mb divided by seconds
+      stderr.writeLine(&"                    Processed {($totalSeqs).insertSep(',')} sequences at {($rate).insertSep(',')} Mbp/sec")
+      lastBaseCount = totalBases
+
+    # bail early if the sequence is completely out of the size range
     originalLen = record.len
+    if originalLen < minLen or originalLen > maxLen:
+      continue
+
     monomerized = record.monomerize(seedLen, minIdentity)
 
     if canonicalize:
       monomerized = toRecord[Dna](minimalCanonicalRotation(monomerized), monomerized.description)
 
-    if minLen <= monomerized.len and monomerized.len <= maxLen:
+    if minLen <= monomerized.len and monomerized.len <= maxMonomerLen:
       writeLine(outfileFile, monomerized.asFasta())
       inc count
       
@@ -90,7 +116,5 @@ proc find_circs*(infile: string,
       # This is useful since finding the original might take a long time
       if outTsv:
         writeLine(outTsvFile, monomerized.description, "\t", originalLen / monomerized.len, "\t", originalLen, "\t", monomerized.len)
-    
-    inc total
 
-  return (count: count, total: total, duration: (getMonoTime() - startTime).inMilliseconds.int)
+  return (count, totalSeqs, totalBases, (getMonoTime() - startTime).inMilliseconds.int)
