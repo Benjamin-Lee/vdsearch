@@ -4,7 +4,7 @@ import typer
 
 FASTA = typer.Argument(
     ...,
-    help="Path to .fasta or .fasta.gz file",
+    help="Path to .fasta file",
     exists=True,
     file_okay=True,
     dir_okay=False,
