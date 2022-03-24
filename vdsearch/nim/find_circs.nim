@@ -81,8 +81,10 @@ proc find_circs*(infile: string,
   var count = 0
   var totalSeqs = 0
   var totalBases = 0
+
+  # for tracking performance
   var lastBaseCount = 0
-  let startTime = getMonoTime()
+  var lastTime = getMonoTime()
 
   let infileFile = if infile == "-": stdin else: open(infile, fmRead) # the input file as an opend File object
   defer: infileFile.close()
@@ -93,10 +95,11 @@ proc find_circs*(infile: string,
     totalBases.inc(record.len)
 
     if verbose and totalSeqs mod 10000000 == 0:
-      let elapsed = (getMonoTime() - startTime).inMilliseconds.int
+      let elapsed = (getMonoTime() - lastTime).inMilliseconds.int
       let rate = (((totalBases - lastBaseCount).float / 1000000) / (elapsed / 1000)).int # the number of Mb divided by seconds
       stderr.writeLine(&"                    Processed {($totalSeqs).insertSep(',')} sequences at {($rate).insertSep(',')} Mbp/sec")
       lastBaseCount = totalBases
+      lastTime = getMonoTime()
 
     # bail early if the sequence is completely out of the size range
     originalLen = record.len
