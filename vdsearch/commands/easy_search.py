@@ -30,6 +30,12 @@ def easy_search(
     ),
     reference_cms: Path = ReferenceCms,
     assume_circular: bool = typer.Option(False, help="Assume circular sequences"),
+    tmpdir: Path = typer.Option(
+        Path("."),
+        file_okay=False,
+        dir_okay=True,
+        help="Path to temporary directory for intermediate files",
+    ),
     threads: int = Threads,
     force: bool = typer.Option(
         False,
@@ -142,7 +148,7 @@ def easy_search(
         logging.warning("Viroid-like sequences already found. Skipping.")
 
     # run clustering
-    mmseqs_tmpdir = Path("mmseqstmp")
+    mmseqs_tmpdir = tmpdir / Path("mmseqstmp")
     cluster_tsv = outdir / Path(f"06.{fasta.stem}.cluster.tsv")
     rep_seqs = outdir / Path(f"06.{fasta.stem}.cluster.fasta")
     if not cluster_tsv.exists() or not rep_seqs.exists():
