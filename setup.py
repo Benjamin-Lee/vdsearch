@@ -19,5 +19,6 @@ setup(
         "rich_click",
         "shellingham",
         "typer",
+        "scikit-bio",
     ],
 )
