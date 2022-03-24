@@ -85,6 +85,7 @@ proc find_circs*(infile: string,
   # for tracking performance
   var lastBaseCount = 0
   var lastTime = getMonoTime()
+  var startTime = getMonoTime()
 
   let infileFile = if infile == "-": stdin else: open(infile, fmRead) # the input file as an opend File object
   defer: infileFile.close()
