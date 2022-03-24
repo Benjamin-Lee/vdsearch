@@ -87,7 +87,7 @@ def easy_search(
 
     if assume_circular:
         logging.info("Assuming circular sequences.")
-        canonicalize(fasta, circs, min_len=100, max_len=3000)
+        canonicalize(fasta, circs, min_len=100, max_len=10_000)
 
     if not circs.exists():
         find_circs(
@@ -96,8 +96,8 @@ def easy_search(
             canonicalize=True,
             tsv=True,
             min_len=100,
-            max_monomer_len=3000,
-            max_len=6000,
+            max_monomer_len=10_000,
+            max_len=10_000,
         )
     else:
         logging.warning("CircRNAs already found. Skipping.")
