@@ -158,7 +158,7 @@ def download_cms(
     force: bool = typer.Option(False, help="Force download of the reference CMs"),
     threads: int = Threads,
 ):
-    """Download the latest covariance matrices for ribozymes."""
+    """Download the latest covariance matrices for self-cleaving ribozymes."""
 
     app_dir = Path(typer.get_app_dir("vdsearch"))
     cms_dir = app_dir / "data" / "cms" / "raw"
