@@ -59,7 +59,7 @@ def easy_search(
     6. Using the ribozyme data and search results, output viroid-like sequences
     """
 
-    # preflight checks
+    # region: preflight checks
     logging.debug("Checking that all needed tools exist...")
     check_executable_exists("seqkit")
     check_executable_exists("cmsearch")
@@ -82,13 +82,15 @@ def easy_search(
     logging.debug("Directory locked.")
 
     logging.info(f"Beginning search for viroid-like RNAs using {threads} threads...")
+    # endregion
+
     # if not reference_db:
     #     download.download_viroiddb()
 
     # if not reference_cms:
     #     download.download_cms()
 
-    # run cirit/rotcanon
+    # region: run cirit/rotcanon
     circs = outdir / Path(f"01.{fasta.stem}.circs.fasta")
 
     if assume_circular:
@@ -107,15 +109,17 @@ def easy_search(
         )
     else:
         logging.warning("CircRNAs already found. Skipping.")
+    # endregion
 
-    # run dedup using seqkit
+    # region: run dedup using seqkit
     deduped_circs = outdir / Path(f"03.{fasta.stem}.deduped.fasta")
     if not deduped_circs.exists():
         dedup(circs, deduped_circs, threads=threads)
     else:
         logging.warning("CircRNAs already deduplicated. Skipping.")
+    # endregion
 
-    # run infernal
+    # region: run infernal
     cmsearch_output = outdir / Path(f"04.{fasta.stem}.infernal.out")
     cmsearch_tblout = outdir / Path(f"04.{fasta.stem}.infernal.tblout")
     if not cmsearch_output.exists() or not cmsearch_tblout.exists():
@@ -129,8 +133,9 @@ def easy_search(
         )
     else:
         logging.warning("Infernal already run. Skipping.")
+    # endregion
 
-    # find the viroids in the infernal output
+    # region: find the viroids in the infernal output
     rz_seqs = outdir / Path(f"05.{fasta.stem}.viroidlike.fasta")
     viroidlike_rzs = outdir / Path(f"05.{fasta.stem}.viroidlike.tsv")
     if not rz_seqs.exists() or not viroidlike_rzs.exists():
@@ -146,8 +151,9 @@ def easy_search(
         logging.done(f"Wrote to {rz_seqs}")  # type: ignore
     else:
         logging.warning("Viroid-like sequences already found. Skipping.")
+    # endregion
 
-    # run clustering
+    # region: run clustering
     mmseqs_tmpdir = tmpdir / Path("mmseqstmp")
     cluster_tsv = outdir / Path(f"06.{fasta.stem}.cluster.tsv")
     rep_seqs = outdir / Path(f"06.{fasta.stem}.cluster.fasta")
@@ -172,6 +178,7 @@ def easy_search(
         cluster_tsv, sep="\t", names=["cluster_id", "seq_id"]
     ).cluster_id.nunique()
     logging.done(f"{unique_cluster_count} viroid-like sequences clusters found.")  # type: ignore
+    # endregion
 
     # # run mmseqs
     # mmseqs(fasta)
