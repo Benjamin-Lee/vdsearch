@@ -64,6 +64,8 @@ def parse_cm_file(path: Path) -> Dict[str, Dict[str, float]]:
 
 def ribozyme_filter(
     infernal_tblout: Path,
+    rnamotif_txt: Path = None,
+    rnamotif_name: str = None,
     output_tsv: Optional[Path] = None,
     use_cm_cutoff: bool = True,
     cm_file: Optional[Path] = None,
@@ -140,6 +142,48 @@ def ribozyme_filter(
             )
             rz_significant.update(rz_df.query(f"evalue < {max_evalue}").seq_id)
 
+    # Parse and add RNAmotif hits
+    if rnamotif_txt:
+        rnamotifs = pd.read_csv(
+            rnamotif_txt,
+            delim_whitespace=True,
+            comment="#",
+            header=None,
+            names=["seq_id", "score", "strand", "from_", "length"],
+            usecols=[0, 1, 2, 3, 4],
+        )
+        rz_plus.update(rnamotifs.query("strand == 0").seq_id)
+        rz_minus.update(rnamotifs.query("strand == 1").seq_id)
+        # note that there's no add to rz_significant here
+        # this is since I'm not sure if the RNAmotif hits are significant
+
+        # merge the rnamotifs df into the ribozymes df
+        # iterate over rnamotifs
+        for rnamotif in rnamotifs.itertuples(index=False):
+            ribozymes = pd.concat(
+                [
+                    ribozymes,
+                    pd.DataFrame(
+                        [
+                            {
+                                "seq_id": rnamotif.seq_id,
+                                "ribozyme": rnamotif_name,
+                                "strand": "+" if rnamotif.strand == 0 else "-",
+                                "evalue": max_evalue**0.5,
+                                "from": rnamotif.from_,
+                                "to": rnamotif.from_
+                                + (
+                                    rnamotif.length * 1
+                                    if rnamotif.strand == 0
+                                    else -1 * rnamotif.length
+                                ),
+                            }
+                        ]
+                    ),
+                ],
+                ignore_index=True,
+            )
+
     # any sequence with a ribozyme match (even weaker than cutoff) is counted as significant if there are two
     double_rz_ids = rz_plus.intersection(rz_minus)
     # all sequences with a significant ribozyme
@@ -190,6 +234,13 @@ def ribozyme_filter_wrapper(
         readable=True,
         help="Path to Infernal tabular output",
     ),
+    rnamotif_txt: Path = typer.Option(
+        None,
+        help="Path to pruned RNAmotif .txt file for viroid-like sequences. Note that e-values will be fixed at the square root of --max-evalue. Concatenated outputs of RNAmotif are not supported.",
+    ),
+    rnamotif_name: str = typer.Option(
+        None, help="Name of motif to use in the ribozyme column of the output"
+    ),
     output_tsv: Path = typer.Option(
         None,
         help="Path to output TSV file with Infernal results for viroid-like sequences",
@@ -210,6 +261,8 @@ def ribozyme_filter_wrapper(
     logging.info(f"Reading Infernal tabular output from {infernal_tblout}")
     ribozyme_filter(
         infernal_tblout,
+        rnamotif_txt=rnamotif_txt,
+        rnamotif_name=rnamotif_name,
         output_tsv=output_tsv,
         use_cm_cutoff=use_cm_cutoff,
         cm_file=cm_file,
