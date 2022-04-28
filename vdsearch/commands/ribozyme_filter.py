@@ -203,8 +203,8 @@ def ribozyme_filter(
     logging.debug("Generating output dataframes...")
 
     # add categorical information about how many ribozymes are in the sequence
-    ribozymes.loc[ribozymes["seq_id"].isin(double_rz_ids), "Polarity"] = "(+) and (-)"
-    ribozymes.loc[ribozymes["seq_id"].isin(single_rz_ids), "Polarity"] = "(+)"
+    ribozymes.loc[ribozymes["seq_id"].isin(double_rz_ids), "symmetric"] = True
+    ribozymes.loc[ribozymes["seq_id"].isin(single_rz_ids), "symmetric"] = False
 
     single_rzs = ribozymes.loc[ribozymes.seq_id.isin(single_rz_ids)]
     double_rzs = ribozymes.loc[ribozymes.seq_id.isin(double_rz_ids)]
