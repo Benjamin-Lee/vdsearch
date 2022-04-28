@@ -241,9 +241,13 @@ def summarize(
             if rzs_present[0].shape[0]:
                 seq_data["rz_plus"] = rzs_present[0].ribozyme.values[0]
                 seq_data["rz_plus_evalue"] = rzs_present[0].evalue.values[0]
+                seq_data["rz_plus_from"] = rzs_present[0]["from"].values[0]
+                seq_data["rz_plus_to"] = rzs_present[0]["to"].values[0]
             if rzs_present[1].shape[0]:
                 seq_data["rz_minus"] = rzs_present[1].ribozyme.values[0]
                 seq_data["rz_minus_evalue"] = rzs_present[1].evalue.values[0]
+                seq_data["rz_minus_from"] = rzs_present[1]["from"].values[0]
+                seq_data["rz_minus_to"] = rzs_present[1]["to"].values[0]
 
             # merge in
             seq_data.update(
@@ -292,7 +296,11 @@ def summarize(
             "symmetric",
             "rz_plus",
             "rz_minus",
+            "rz_plus_from",
+            "rz_plus_to",
             "rz_plus_evalue",
+            "rz_minus_from",
+            "rz_minus_to",
             "rz_minus_evalue",
             "mfe",
             "paired_percent",
