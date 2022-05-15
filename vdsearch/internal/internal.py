@@ -200,6 +200,10 @@ def summarize(
     Summarize the results of the analysis.
     """
 
+    logging.warn(
+        "If you're not Benjamin, you probably don't want to use this. If you are using this, let me know since I want to hear from you."
+    )
+
     sequences = {}
     seq_id_to_new_id = {}
     ribozymes_df = pd.read_csv(ribozyme_tsv, sep="\t")
