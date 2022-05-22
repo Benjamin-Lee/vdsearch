@@ -21,7 +21,7 @@ app.command()(commands.download_cms)  # type: ignore
 app.command()(commands.download_viroiddb)  # type: ignore
 app.command()(commands.find_circs)  # type: ignore
 app.command()(commands.dedup)  # type: ignore
-app.command()(commands.cluster)  # type: ignore
+app.command()(commands.mmseqs.cluster)  # type: ignore
 app.command()(commands.easy_search)  # type: ignore
 app.command()(commands.canonicalize)  # type: ignore
 app.command()(commands.infernal)  # type: ignore

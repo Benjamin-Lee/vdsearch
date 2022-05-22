@@ -1,5 +1,5 @@
 from .canonicalize import canonicalize
-from .cluster import cluster
+from .mmseqs import cluster, search
 from .dedup import dedup
 from .download import download_cms, download_viroiddb
 from .easy_search import easy_search

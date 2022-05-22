@@ -9,27 +9,32 @@ import typer
 from rich.console import Console
 
 from vdsearch.commands.canonicalize import canonicalize
-from vdsearch.commands.cluster import cluster
+from vdsearch.commands.mmseqs import cluster, search
 from vdsearch.commands.dedup import dedup
 from vdsearch.commands.find_circs import find_circs
 from vdsearch.commands.infernal import infernal
 from vdsearch.commands.ribozyme_filter import ribozyme_filter
 from vdsearch.nim import write_seqs as ws
-from vdsearch.types import FASTA, ReferenceCms, Threads
+from vdsearch.types import FASTA, ReferenceCms, Threads, ViroidDB
 from vdsearch.utils import check_executable_exists
 
 
 def easy_search(
     fasta: Path = FASTA,
-    outdir: Path = typer.Option(Path("."), file_okay=False, dir_okay=True),
-    reference_db: Path = typer.Option(
+    outdir: Path = typer.Option(
         None,
-        help="Path to FASTA-formatted reference viroid database. If none is provided, the latest ViroidDB will be used.",
-        file_okay=True,
-        dir_okay=False,
+        file_okay=False,
+        dir_okay=True,
+        help="Directory to write the results to. If not provided, a directory with the same name as the input file will be created.",
     ),
+    reference_db: Path = ViroidDB,
     reference_cms: Path = ReferenceCms,
-    assume_circular: bool = typer.Option(False, help="Assume circular sequences"),
+    circular: bool = typer.Option(
+        False, help="Assume circular sequences and skip circularity detection."
+    ),
+    skip_canonicalization: bool = typer.Option(
+        False, help="Skip canonicalization step (useful when pre-annotated)"
+    ),
     tmpdir: Path = typer.Option(
         Path("."),
         file_okay=False,
@@ -64,6 +69,19 @@ def easy_search(
     check_executable_exists("seqkit")
     check_executable_exists("cmsearch")
     check_executable_exists("mmseqs")
+    if not reference_db.exists():
+        raise click.ClickException(
+            f"ViroidDB not found at {reference_db}. Please download it from https://viroids.org."
+        )
+    if not reference_cms.exists():
+        raise click.ClickException(
+            f"ReferenceCms not found at {reference_cms}. Please download it using:\n\n\tvdsearch download-cms"
+        )
+
+    # handle output directory inference
+    if outdir is None:
+        logging.debug("No output directory provided. Using input file name.")
+        outdir = Path(".") / fasta.stem
 
     logging.debug("Making output directory...")
     outdir.mkdir(parents=True, exist_ok=True)
@@ -91,11 +109,14 @@ def easy_search(
     #     download.download_cms()
 
     # region: run cirit/rotcanon
-    circs = outdir / Path(f"01.{fasta.stem}.circs.fasta")
+    circs = outdir / Path(f"circs.fasta")
 
-    if assume_circular:
+    if circular and not skip_canonicalization:
         logging.info("Assuming circular sequences.")
         canonicalize(fasta, circs, min_len=100, max_len=10_000)
+    elif skip_canonicalization:
+        logging.info("Skipping canonicalization step.")
+        shutil.copyfile(fasta, circs)
 
     if not circs.exists():
         find_circs(
@@ -112,7 +133,7 @@ def easy_search(
     # endregion
 
     # region: run dedup using seqkit
-    deduped_circs = outdir / Path(f"03.{fasta.stem}.deduped.fasta")
+    deduped_circs = outdir / "deduped_circs.fasta"
     if not deduped_circs.exists():
         dedup(circs, deduped_circs, threads=threads)
     else:
@@ -120,8 +141,8 @@ def easy_search(
     # endregion
 
     # region: run infernal
-    cmsearch_output = outdir / Path(f"04.{fasta.stem}.infernal.out")
-    cmsearch_tblout = outdir / Path(f"04.{fasta.stem}.infernal.tblout")
+    cmsearch_output = outdir / "infernal.out"
+    cmsearch_tblout = outdir / "infernal.tblout"
     if not cmsearch_output.exists() or not cmsearch_tblout.exists():
         infernal(
             deduped_circs,
@@ -136,8 +157,8 @@ def easy_search(
     # endregion
 
     # region: find the viroids in the infernal output
-    rz_seqs = outdir / Path(f"05.{fasta.stem}.viroidlike.fasta")
-    viroidlike_rzs = outdir / Path(f"05.{fasta.stem}.viroidlike.tsv")
+    rz_seqs = outdir / "seqs_with_rzs.fasta"
+    viroidlike_rzs = outdir / "seqs_with_rzs.tsv"
     if not rz_seqs.exists() or not viroidlike_rzs.exists():
         ribozymes = ribozyme_filter(
             cmsearch_tblout, output_tsv=viroidlike_rzs, cm_file=reference_cms
@@ -153,10 +174,16 @@ def easy_search(
         logging.warning("Viroid-like sequences already found. Skipping.")
     # endregion
 
+    # region: search against ViroidDB
+    viroiddb_hits = outdir / "search_vs_viroiddb.tsv"
+    if not viroiddb_hits.exists():
+        search(deduped_circs, reference_db, output_tsv=viroiddb_hits, threads=threads)
+    # endregion
+
     # region: run clustering
-    mmseqs_tmpdir = tmpdir / Path("mmseqstmp")
-    cluster_tsv = outdir / Path(f"06.{fasta.stem}.cluster.tsv")
-    rep_seqs = outdir / Path(f"06.{fasta.stem}.cluster.fasta")
+    mmseqs_tmpdir = tmpdir / "mmseqstmp"
+    cluster_tsv = outdir / "cluster.tsv"
+    rep_seqs = outdir / "cluster.fasta"
     if not cluster_tsv.exists() or not rep_seqs.exists():
         cluster(rz_seqs, tmpdir=mmseqs_tmpdir, threads=threads)
         # rename the cluster file to the expected name

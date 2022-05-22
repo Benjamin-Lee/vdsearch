@@ -21,3 +21,10 @@ ReferenceCms: Path = typer.Option(
     file_okay=True,
     dir_okay=False,
 )
+
+ViroidDB: Path = typer.Option(
+    Path(typer.get_app_dir("vdsearch")) / "data" / "viroiddb.fasta",
+    help="Path to FASTA-formatted reference viroid database. If none is provided, the latest ViroidDB will be used.",
+    file_okay=True,
+    dir_okay=False,
+)
