@@ -221,7 +221,7 @@ def easy_search(
             str(seqs_matching_viroiddb),
             search_results["query"].tolist(),
         )
-        logging.done("Wrote to {seqs_matching_viroiddb}")  # type: ignore
+        logging.done(f"Wrote to {seqs_matching_viroiddb}")  # type: ignore
     else:
         logging.warning("ViroidDB sequences already emitted. Skipping.")
     # endregion
