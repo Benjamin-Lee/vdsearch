@@ -3,7 +3,7 @@ import logging
 import shutil
 from pathlib import Path
 
-import click
+import rich_click as click
 import pandas as pd
 from pkg_resources import resource_filename  # type: ignore
 import rich
