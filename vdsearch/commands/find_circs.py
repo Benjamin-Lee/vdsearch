@@ -62,7 +62,7 @@ def find_circs(
     logging.debug(f"{'Will' if canonicalize else 'Will not'} canonicalize them.")
     logging.debug(
         f"Only monomers of length {min_len} to {max_len} will be monomerized. "
-        f"Only monomers less than {max_monomer_len} nt will be included in {fasta.name}."
+        f"Only monomers less than {max_monomer_len} nt will be included in {output}."
     )
     circs = fc.find_circs(
         str(fasta),
