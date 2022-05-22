@@ -1,4 +1,5 @@
 import logging
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -47,6 +48,7 @@ def cluster(
             check=True,
         )
         logging.done("Done clustering.")  # type: ignore
+        shutil.rmtree(tmpdir)
     except subprocess.CalledProcessError as e:
         logging.error(f"MMseqs failed with exit code {e.returncode}")
         if e.output:
@@ -91,6 +93,7 @@ def search(
             check=True,
         )
         logging.done("Done searching..")  # type: ignore
+        shutil.rmtree(tmpdir)
     except subprocess.CalledProcessError as e:
         logging.error(f"MMseqs failed with exit code {e.returncode}")
         if e.output:
