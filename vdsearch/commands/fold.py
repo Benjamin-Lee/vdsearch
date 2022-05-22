@@ -6,9 +6,10 @@ from typing import Optional
 import typer
 
 from vdsearch.types import FASTA, Threads
-from vdsearch.utils import check_executable_exists
+from vdsearch.utils import check_executable_exists, typer_unpacker
 
 
+@typer_unpacker
 def fold(
     fasta: Path = FASTA,
     output: Optional[Path] = typer.Option(None),

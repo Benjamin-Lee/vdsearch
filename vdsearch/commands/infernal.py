@@ -108,4 +108,4 @@ def infernal(
         raise click.Abort(
             f"{base_command} failed with exit code {error.returncode}",
         )
-    logging.done("Done searching for ribozymes.")  # type: ignore
+    logging.done(f"Done searching for ribozymes using {base_command}.")  # type: ignore

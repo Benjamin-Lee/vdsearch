@@ -143,7 +143,7 @@ def ribozyme_filter(
             rz_significant.update(rz_df.query(f"evalue < {max_evalue}").seq_id)
 
     # Parse and add RNAmotif hits
-    if rnamotif_txt:
+    if rnamotif_txt and rnamotif_txt.exists():
         rnamotifs = pd.read_csv(
             rnamotif_txt,
             delim_whitespace=True,
@@ -196,7 +196,7 @@ def ribozyme_filter(
         return
 
     logging.done(  # type: ignore
-        f"Found {len(ribozy_likes_ids)} viroid-like sequences. "
+        f"Found {len(ribozy_likes_ids)} viroid-like sequences with ribozymes. "
         f"{len(single_rz_ids)} with one ribozyme, {len(double_rz_ids)} with two ribozymes."
     )
 
@@ -266,7 +266,7 @@ def ribozyme_filter_wrapper(
         output_tsv=output_tsv,
         use_cm_cutoff=use_cm_cutoff,
         cm_file=cm_file,
-        cm_cutoff_type=cm_cutoff_type.value,
+        cm_cutoff_type=cm_cutoff_type.value,  # type: ignore
         use_evalue_cutoff=use_evalue_cutoff,
         max_evalue=max_evalue,
     )

@@ -1,19 +1,25 @@
+import subprocess
 import logging
 import shutil
 from pathlib import Path
 
 import click
 import pandas as pd
+from pkg_resources import resource_filename  # type: ignore
 import rich
+import skbio
 import typer
 from rich.console import Console
 
 from vdsearch.commands.canonicalize import canonicalize
+from vdsearch.commands.fold import fold
 from vdsearch.commands.mmseqs import cluster, search
 from vdsearch.commands.dedup import dedup
 from vdsearch.commands.find_circs import find_circs
 from vdsearch.commands.infernal import infernal
 from vdsearch.commands.ribozyme_filter import ribozyme_filter
+from vdsearch.commands.rnamotif import rnamotif
+from vdsearch.commands.summarize import summarize
 from vdsearch.nim import write_seqs as ws
 from vdsearch.types import FASTA, ReferenceCms, Threads, ViroidDB
 from vdsearch.utils import check_executable_exists
@@ -109,7 +115,7 @@ def easy_search(
     #     download.download_cms()
 
     # region: run cirit/rotcanon
-    circs = outdir / Path(f"circs.fasta")
+    circs = outdir / "circs.fasta"
 
     if circular and not skip_canonicalization:
         logging.info("Assuming circular sequences.")
@@ -156,14 +162,33 @@ def easy_search(
         logging.warning("Infernal already run. Skipping.")
     # endregion
 
+    # region: run rnamotif if possible
+    rnamotif_output = outdir / "rnamotif.tsv"
+    if not rnamotif_output.exists():
+        try:
+            rnamotif(
+                deduped_circs,
+                Path(resource_filename("vdsearch", "data/rnamotif/Hammerhead_3.descr")),
+                rnamotif_output,
+            )
+        except Exception:
+            logging.warn("Could not run RNAmotif. Skipping.")
+    else:
+        logging.warning("RNAmotif already run. Skipping.")
+    # endregion
+
     # region: find the viroids in the infernal output
     rz_seqs = outdir / "seqs_with_rzs.fasta"
     viroidlike_rzs = outdir / "seqs_with_rzs.tsv"
     if not rz_seqs.exists() or not viroidlike_rzs.exists():
         ribozymes = ribozyme_filter(
-            cmsearch_tblout, output_tsv=viroidlike_rzs, cm_file=reference_cms
+            cmsearch_tblout,
+            output_tsv=viroidlike_rzs,
+            cm_file=reference_cms,
+            rnamotif_name="Hammerhead_3",
+            rnamotif_txt=rnamotif_output,
         )
-        logging.info("Outputting viroid-like sequences...")
+        logging.info("Outputting sequences with ribozymes...")
         ws.write_seqs(
             str(deduped_circs),
             str(rz_seqs),
@@ -180,37 +205,114 @@ def easy_search(
         search(deduped_circs, reference_db, output_tsv=viroiddb_hits, threads=threads)
     # endregion
 
-    # region: run clustering
-    mmseqs_tmpdir = tmpdir / "mmseqstmp"
-    cluster_tsv = outdir / "cluster.tsv"
-    rep_seqs = outdir / "cluster.fasta"
-    if not cluster_tsv.exists() or not rep_seqs.exists():
-        cluster(rz_seqs, tmpdir=mmseqs_tmpdir, threads=threads)
-        # rename the cluster file to the expected name
-        # we have to use shutil.move since there might be filesystem issues on clusters
-        # Python < 3.9 doesn't support Pathlib for shutil.move so we have to use str() :(
-        shutil.move(str(Path("clu_cluster.tsv")), str(cluster_tsv))
-        shutil.move(str(Path("clu_rep_seq.fasta")), str(rep_seqs))
-
-        # remove the weird pseudo-FASTA formatted cluster file
-        Path("clu_all_seqs.fasta").unlink()
-
-        logging.debug("Cleaning up temporary files from clustering...")
-        shutil.rmtree(mmseqs_tmpdir)
+    # region: extract the viroid matches from ViroidDB
+    seqs_matching_viroiddb = outdir / "seqs_matching_viroiddb.fasta"
+    if not seqs_matching_viroiddb.exists():
+        logging.info("Outputting sequences matching ViroidDB...")
+        search_results = pd.read_csv(
+            viroiddb_hits,
+            sep="\t",
+            names="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,theader,qcov,tcov,cigar".split(
+                ","
+            ),
+        )
+        ws.write_seqs(
+            str(deduped_circs),
+            str(seqs_matching_viroiddb),
+            search_results["query"].tolist(),
+        )
+        logging.done("Wrote to {seqs_matching_viroiddb}")  # type: ignore
     else:
-        logging.warning("Clustering already run. Skipping.")
-
-    # report on the clustering results
-    unique_cluster_count = pd.read_csv(
-        cluster_tsv, sep="\t", names=["cluster_id", "seq_id"]
-    ).cluster_id.nunique()
-    logging.done(f"{unique_cluster_count} viroid-like sequences clusters found.")  # type: ignore
+        logging.warning("ViroidDB sequences already emitted. Skipping.")
     # endregion
 
-    # # run mmseqs
-    # mmseqs(fasta)
+    # region: merge the two fasta files from ribozyme and viroid db
+    merged_seqs = outdir / "viroid_like.fasta"
+    if not merged_seqs.exists():
+        logging.info("Merging sequences found by ribozyme and ViroidDB searches...")
+        seen = set()
+        with merged_seqs.open("w") as f:
+            # we do viroiddb first so matches are first in the summary
+            for search_result in [seqs_matching_viroiddb, rz_seqs]:
+                for record in skbio.read(
+                    str(search_result), "fasta", constructor=skbio.DNA
+                ):
+                    if record.metadata["id"] in seen:
+                        continue
+                    f.write(f">{record.metadata['id']}\n{record}\n")
+                    seen.add(record.metadata["id"])
+        logging.done("Merged.")  # type: ignore
+    else:
+        logging.warning("Sequences are already merged. Skipping.")
+    # endregion
 
-    # remove_rz_only_hits(fasta)
+    # region: fold the sequences
+    folded_seqs_plus = outdir / "viroid_like_plus.dbn"
+    folded_seqs_minus = outdir / "viroid_like_minus.dbn"
+    if not folded_seqs_plus.exists() or not folded_seqs_minus.exists():
+        fold(merged_seqs, folded_seqs_plus, threads=threads)
+
+        # reverse complement the sequences and fold them
+        rev_comp_temp = outdir / "rev_comp_temp.fasta"
+        try:
+            subprocess.run(
+                f"seqkit seq --reverse --complement --quiet {merged_seqs} --out-file {rev_comp_temp} 2>/dev/null",
+                shell=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise e
+        fold(rev_comp_temp, folded_seqs_minus, threads=threads)
+        rev_comp_temp.unlink()  # clean up
+    else:
+        logging.warning("Sequences are already folded. Skipping.")
+    # endregion
+
+    # region: generate summary table
+    summary_table = outdir / "viroid_like.tsv"
+    if not summary_table.exists():
+        logging.info("Generating summary table...")
+        summary_table = summarize(
+            fasta=merged_seqs,
+            ribozyme_tsv=viroidlike_rzs,
+            viroiddb_tsv=viroiddb_hits,
+            dbn_plus=folded_seqs_plus,
+            dbn_minus=folded_seqs_minus,
+            source=outdir.stem,
+            circ_tsv=outdir / "circs.tsv",
+            outfile=summary_table,
+            header=True,
+        )
+    else:
+        logging.warning("Summary table already generated. Skipping.")
+    # endregion
+
+    # region: run clustering
+    # mmseqs_tmpdir = tmpdir / "mmseqstmp"
+    # cluster_tsv = outdir / "cluster.tsv"
+    # rep_seqs = outdir / "cluster.fasta"
+    # if not cluster_tsv.exists() or not rep_seqs.exists():
+    #     cluster(rz_seqs, tmpdir=mmseqs_tmpdir, threads=threads)
+    #     # rename the cluster file to the expected name
+    #     # we have to use shutil.move since there might be filesystem issues on clusters
+    #     # Python < 3.9 doesn't support Pathlib for shutil.move so we have to use str() :(
+    #     shutil.move(str(Path("clu_cluster.tsv")), str(cluster_tsv))
+    #     shutil.move(str(Path("clu_rep_seq.fasta")), str(rep_seqs))
+
+    #     # remove the weird pseudo-FASTA formatted cluster file
+    #     Path("clu_all_seqs.fasta").unlink()
+
+    #     logging.debug("Cleaning up temporary files from clustering...")
+    #     shutil.rmtree(mmseqs_tmpdir)
+    # else:
+    #     logging.warning("Clustering already run. Skipping.")
+
+    # # report on the clustering results
+    # unique_cluster_count = pd.read_csv(
+    #     cluster_tsv, sep="\t", names=["cluster_id", "seq_id"]
+    # ).cluster_id.nunique()
+    # logging.done(f"{unique_cluster_count} viroid-like sequences clusters found.")  # type: ignore
+    # endregion
 
     # logging.done(f"The results are in [green bold]{fasta.stem}_viroidlikes.fasta.[/]")  # type: ignore
     Console().log(

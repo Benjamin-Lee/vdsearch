@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename  # type: ignore
 
 import click
 import typer
@@ -60,7 +60,7 @@ def rnamotif(
 
     command = (
         f"EFNDATA={efndata} rnamotif "
-        f"-descr {descr} {fasta} | "
+        f"-descr {descr} {fasta} 2>/dev/null | "
         f"rmprune | rmfmt > {output}"
     )
     logging.info(f"Searching for {descr.stem} in {fasta} using RNAmotif")
@@ -75,4 +75,4 @@ def rnamotif(
         raise click.Abort(
             f"RNAmotif failed with exit code {error.returncode}",
         )
-    logging.done("Done searching for ribozymes.")  # type: ignore
+    logging.done("Done searching for ribozymes using RNAmotif.")  # type: ignore

@@ -185,134 +185,42 @@ def rank_by_ribozyme(
 
 
 @app.command()
-def summarize(
-    fasta: Path = FASTA,
-    ribozyme_tsv: Path = typer.Argument(..., help="Path to ribozyme TSV file"),
-    dbn: Path = typer.Argument(..., help="Path to structure dbn file"),
-    # raw_fasta: Path = FASTA,
-    source: str = typer.Argument(..., help="Source of the sequences"),
+def dbn2dot(
+    dbn: Path,
     outfile: Path = typer.Argument(..., help="Path to output file"),
-    header: bool = typer.Option(
-        False, help="Include a header. Only useful for the first run"
-    ),
 ):
     """
-    Summarize the results of the analysis.
+    Convert a dbn file to a dot file
     """
+    seq_id, structure, seq, mfe = "", "", "", 0.0
+    with dbn.open() as f:
+        for i, line in enumerate(f):
+            if i % 3 == 0:
+                seq_id = line.strip()[1:]
+            elif i % 3 == 1:
+                seq = line.strip()
+            elif i % 3 == 2:
+                structure = line.strip()[0 : line.strip().rfind("(")]
+            if i == 3:
+                break
 
-    logging.warn(
-        "If you're not Benjamin, you probably don't want to use this. If you are using this, let me know since I want to hear from you."
-    )
+    # print("digraph G {\n\t{")
+    # for i, base in enumerate(seq):
+    #     print(f"\t\t{i} [label={base}]")
+    # print("\t}")
+    # for i in range(len(seq) - 1):
+    #     print(f"{i} -> {i + 1}")
+    # print(f"{len(seq) - 1} -> 0")
 
-    sequences = {}
-    seq_id_to_new_id = {}
-    ribozymes_df = pd.read_csv(ribozyme_tsv, sep="\t")
-    dbn_df = dbn2tsv(dbn)
+    open = []
+    for i, base in enumerate(structure):
+        if base == "(":
+            open.append(i)
+        elif base == ")":
+            # print(f"{open.pop()} -> {i}[dir=none]")
+            print(f"{open.pop()}\t{i}")
 
-    seq: skbio.DNA
-    with rich.progress.open(fasta) as f:
-        for seq in skbio.read(f, format="fasta", constructor=skbio.DNA):
-            seq_data = {}
-
-            seq_id = seq.metadata["id"]
-            # basic sequence information
-            seq_data["seq_id"] = seq_id
-            seq_data["description"] = seq.metadata["description"]
-            seq_data["unit_length"] = len(seq)
-            seq_data["gc_content"] = seq.gc_content()
-
-            seq_ribozymes = ribozymes_df.query(f"seq_id == '{seq_id}'").sort_values(
-                by=["evalue"], ascending=True
-            )
-            seq_data["has_ribozymes"] = (
-                bool(len(seq_ribozymes))
-                and ["Pospi_RY"] != seq_ribozymes.ribozyme.unique().tolist()
-            )
-
-            # I've renamed Polarity to symmetry (and made it boolean) but I'm keeping backwards compatibility
-            if "Polarity" in seq_ribozymes.columns:
-                seq_data["symmetric"] = (
-                    seq_ribozymes.Polarity.unique()[0] == "(+) and (-)"
-                )
-            else:
-                seq_data["symmetric"] = seq_ribozymes.symmetric.unique()[0]
-
-            rzs_present = [
-                seq_ribozymes.loc[seq_ribozymes.strand == strand]
-                for strand in ["+", "-"]
-            ]
-            # print(rzs_present)
-            if rzs_present[0].shape[0]:
-                seq_data["rz_plus"] = rzs_present[0].ribozyme.values[0]
-                seq_data["rz_plus_evalue"] = rzs_present[0].evalue.values[0]
-                seq_data["rz_plus_from"] = rzs_present[0]["from"].values[0]
-                seq_data["rz_plus_to"] = rzs_present[0]["to"].values[0]
-            if rzs_present[1].shape[0]:
-                seq_data["rz_minus"] = rzs_present[1].ribozyme.values[0]
-                seq_data["rz_minus_evalue"] = rzs_present[1].evalue.values[0]
-                seq_data["rz_minus_from"] = rzs_present[1]["from"].values[0]
-                seq_data["rz_minus_to"] = rzs_present[1]["to"].values[0]
-
-            # merge in
-            seq_data.update(
-                dbn_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
-            )
-
-            seq_data["source"] = source
-
-            new_id = (
-                "NV_"
-                + hashlib.blake2b(str(seq).encode("utf-8"), digest_size=8).hexdigest()
-            )
-            seq_data["vdsearch_id"] = new_id
-            seq_id_to_new_id[seq_id] = new_id
-            sequences[new_id] = seq_data
-
-    # find the original lengths
-    # with Progress() as progress:
-    #     task_id = progress.add_task(
-    #         "Finding lengths from raw FASTA", total=len(sequences)
-    #     )
-    #     for seq in skbio.read(str(raw_fasta), "fasta", constructor=skbio.DNA):
-    #         if seq.metadata["id"] in seq_id_to_new_id:
-    #             progress.update(task_id=task_id, advance=1)
-    #             sequences[seq_id_to_new_id[seq.metadata["id"]]]["contig_length"] = len(
-    #                 seq
-    #             )
-
-    #             # include length ratio
-    #             sequences[seq_id_to_new_id[seq.metadata["id"]]][
-    #                 "contig_length_ratio"
-    #             ] = (
-    #                 len(seq)
-    #                 / sequences[seq_id_to_new_id[seq.metadata["id"]]]["unit_length"]
-    #             )
-
-    pd.DataFrame.from_dict(sequences, orient="index")[
-        [
-            "vdsearch_id",
-            "seq_id",
-            "description",
-            "source",
-            "unit_length",
-            "gc_content",
-            "has_ribozymes",
-            "symmetric",
-            "rz_plus",
-            "rz_minus",
-            "rz_plus_from",
-            "rz_plus_to",
-            "rz_plus_evalue",
-            "rz_minus_from",
-            "rz_minus_to",
-            "rz_minus_evalue",
-            "mfe",
-            "paired_percent",
-            "hairpins",
-            "seq",
-            "structure",
-        ]
-    ].to_csv(outfile, sep="\t", index=False, header=header)
+    # print("}")
 
 
 @app.callback()

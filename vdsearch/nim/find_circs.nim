@@ -72,7 +72,7 @@ proc find_circs*(infile: string,
 
   if outTsv:
     outTsvFile = open(changeFileExt(outfile, "tsv"), fmWrite) # the output file as an opend File object
-    outTsvFile.writeLine("id", "\t", "ratio", "\t", "original_len", "\t", "monomerized_len")
+    outTsvFile.writeLine("seq_id", "\t", "ratio", "\t", "original_length", "\t", "unit_length")
 
   var monomerized: Record[Dna]
   var originalLen = 0

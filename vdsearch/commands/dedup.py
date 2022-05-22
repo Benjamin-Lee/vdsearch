@@ -42,7 +42,7 @@ def dedup(
     try:
         result = subprocess.run(command, shell=True, check=True, capture_output=True)
         count = result.stderr.decode("utf-8").split()[1]
-        logging.done(f"{count} duplicate sequences removed.")
+        logging.done(f"{count} duplicate sequences removed.")  # type: ignore
     except subprocess.CalledProcessError as e:
         logging.error(f"Command failed with exit code {e.returncode}")
         logging.error(f"Command output: '{e.output.decode('utf-8').rstrip()}'")
