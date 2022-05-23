@@ -110,10 +110,11 @@ def summarize(
                 use_minus_rz = True
 
                 # if the sequence isn't symmetric, we only want to look at the strand with the best ribozyme
+                # note that we want to use evalue not bitscore
                 if not seq_data["symmetric"]:
-                    best_plus = rzs_present[0].score.max()
-                    best_minus = rzs_present[1].score.max()
-                    if pd.isna(best_minus) or best_plus > best_minus:
+                    best_plus = rzs_present[0].evalue.min()
+                    best_minus = rzs_present[1].evalue.min()
+                    if pd.isna(best_minus) or best_plus < best_minus:
                         use_plus_rz = True
                         use_minus_rz = False
                     else:
@@ -156,6 +157,9 @@ def summarize(
                 seq_data.update(
                     circ_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
                 )
+            else:
+                seq_data["original_length"] = None
+                seq_data["ratio"] = None
 
             seq_data["source"] = source
 
