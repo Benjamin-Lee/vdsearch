@@ -1,7 +1,7 @@
 import hashlib
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import nimporter
 from numpy import product
@@ -221,6 +221,33 @@ def dbn2dot(
             print(f"{open.pop()}\t{i}")
 
     # print("}")
+
+
+@app.command()
+def merge_summaries(
+    infiles: List[Path] = typer.Argument(
+        ...,
+        help="Path to summary files. If a directory, the default summary file from easy-search is used.",
+    ),
+    outfile: Path = typer.Argument(..., help="Path to output file"),
+):
+    """
+    Merge multiple summary files into a single file.
+    """
+    # read in the files
+    dfs = []
+    for infile in infiles:
+        # allow the user to specify a directory or a file
+        # if it's a dir, use the default file name from easy-search
+        if infile.is_dir():
+            infile = infile / "viroid_like.tsv"
+        dfs.append(pd.read_csv(infile, sep="\t"))
+
+    # merge the dataframes
+    df = pd.concat(dfs)
+
+    # write the output file
+    df.to_csv(outfile, sep="\t", index=False)
 
 
 @app.callback()
