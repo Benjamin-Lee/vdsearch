@@ -11,7 +11,7 @@ import skbio
 import typer
 from rich.console import Console
 
-from vdsearch.commands.canonicalize import canonicalize
+from vdsearch.commands.canonicalize import canonicalize as canonicalize_command
 from vdsearch.commands.fold import fold
 from vdsearch.commands.mmseqs import cluster, search
 from vdsearch.commands.dedup import dedup
@@ -38,8 +38,9 @@ def easy_search(
     circular: bool = typer.Option(
         False, help="Assume circular sequences and skip circularity detection."
     ),
-    skip_canonicalization: bool = typer.Option(
-        False, help="Skip canonicalization step (useful when pre-annotated)"
+    canonicalize: bool = typer.Option(
+        True,
+        help="Run canonicalization step (always useful unless pre-annotated coordinates are required).",
     ),
     tmpdir: Path = typer.Option(
         Path("."),
@@ -117,14 +118,19 @@ def easy_search(
     # region: run cirit/rotcanon
     circs = outdir / "circs.fasta"
 
-    if circular and not skip_canonicalization:
-        logging.info("Assuming circular sequences.")
-        canonicalize(fasta, circs, min_len=100, max_len=10_000)
-    elif skip_canonicalization:
-        logging.info("Skipping canonicalization step.")
+    # when there's nothing to do since the required output files exist, skip
+    if circs.exists():
+        logging.warning("CircRNAs already found. Skipping.")
+    # if the input is assumed to be circular but canonicalization is required
+    elif circular and canonicalize:
+        logging.warning("Skipping circularity detection but canonicalizing.")
+        canonicalize_command(fasta, circs, min_len=100, max_len=10_000)
+    # if the input is circular and canonicalization is not required
+    elif circular and not canonicalize:
+        logging.warning("Assuming input are canonical circular sequences.")
         shutil.copyfile(fasta, circs)
-
-    if not circs.exists():
+    # run integrated circularity detection and canonicalization
+    else:
         find_circs(
             fasta,
             circs,
@@ -134,8 +140,6 @@ def easy_search(
             max_monomer_len=10_000,
             max_len=10_000,
         )
-    else:
-        logging.warning("CircRNAs already found. Skipping.")
     # endregion
 
     # region: run dedup using seqkit
