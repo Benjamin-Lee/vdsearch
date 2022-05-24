@@ -228,8 +228,11 @@ def merge_summaries(
     infiles: List[Path] = typer.Argument(
         ...,
         help="Path to summary files. If a directory, the default summary file from easy-search is used.",
+        exists=True,
     ),
-    outfile: Path = typer.Argument(..., help="Path to output file"),
+    outfile: Path = typer.Argument(
+        ..., help="Path to output file", file_okay=True, dir_okay=False
+    ),
 ):
     """
     Merge multiple summary files into a single file.
