@@ -38,13 +38,19 @@ def summarize(
 
     sequences = {}
 
-    ribozymes_df = pd.read_csv(ribozyme_tsv, sep="\t")
-    viroiddb_df = pd.read_csv(
-        viroiddb_tsv,
-        sep="\t",
-        names="query,match_id,match_pident,match_alnlen,match_mismatch,match_gapopen,match_qstart,match_qend,match_tstart,match_tend,match_evalue,match_bits,match_theader,match_qcov,match_tcov,cigar".split(
-            ","
-        ),
+    ribozymes_df = pd.read_csv(ribozyme_tsv, sep="\t").sort_values(
+        by=["evalue"], ascending=True
+    )
+    viroiddb_df = (
+        pd.read_csv(
+            viroiddb_tsv,
+            sep="\t",
+            names="query,match_id,match_pident,match_alnlen,match_mismatch,match_gapopen,match_qstart,match_qend,match_tstart,match_tend,match_evalue,match_bits,match_theader,match_qcov,match_tcov,cigar".split(
+                ","
+            ),
+        )
+        .sort_values(by="match_bits", ascending=False)
+        .drop_duplicates(subset="query", keep="first")
     )
 
     # read and parse structure files
@@ -61,6 +67,7 @@ def summarize(
     dbn_minus_df = dbn2tsv(dbn_minus)
     dbn_minus_df.rename(
         columns={
+            "seq": "seq_minus",
             "mfe": "mfe_minus",
             "paired_percent": "paired_percent_minus",
             "hairpins": "hairpins_minus",
@@ -71,6 +78,9 @@ def summarize(
 
     if circ_tsv is not None and circ_tsv.exists():
         circ_df = pd.read_csv(circ_tsv, sep="\t")
+        circ_df.drop(columns=["unit_length"], inplace=True)  # we recompute this
+    else:
+        circ_df = pd.DataFrame(columns=["seq_id", "original_length", "ratio"])
 
     with rich.progress.open(fasta, transient=True) as f:  # type: ignore
         for seq in skbio.read(f, format="fasta", constructor=skbio.DNA):
@@ -83,9 +93,7 @@ def summarize(
             seq_data["gc_content"] = seq.gc_content()
 
             # ribozyme information
-            seq_ribozymes = ribozymes_df.query(f"seq_id == '{seq_id}'").sort_values(
-                by=["evalue"], ascending=True
-            )
+            seq_ribozymes = ribozymes_df.loc[ribozymes_df["seq_id"] == seq_id]
             seq_data["has_ribozymes"] = (
                 bool(len(seq_ribozymes))
                 and ["Pospi_RY"] != seq_ribozymes.ribozyme.unique().tolist()
@@ -135,31 +143,43 @@ def summarize(
                     seq_data["rz_minus_to"] = rzs_present[1]["to"].values[0]
 
             # viroiddb information
-            viroiddb_match = (
-                viroiddb_df.query(f"query == '{seq_id}'")
-                .sort_values(by="match_bits", ascending=False)
-                .drop_duplicates(subset="query", keep="first")
-                .to_dict(orient="records")
-            )
-            if len(viroiddb_match):
-                seq_data.update((viroiddb_match[0]))
+            # viroiddb_match = viroiddb_df.loc[viroiddb_df["query"] == seq_id].to_dict(
+            #     orient="records"
+            # )
+            # if len(viroiddb_match):
+            #     seq_data.update((viroiddb_match[0]))
+            # else:
+            #     seq_data["match_id"] = None
+            #     seq_data["match_pident"] = None
+            #     seq_data["match_alnlen"] = None
+            #     seq_data["match_mismatch"] = None
+            #     seq_data["match_gapopen"] = None
+            #     seq_data["match_qstart"] = None
+            #     seq_data["match_qend"] = None
+            #     seq_data["match_tstart"] = None
+            #     seq_data["match_tend"] = None
+            #     seq_data["match_evalue"] = None
+            #     seq_data["match_bits"] = None
+            #     seq_data["match_theader"] = None
+            #     seq_data["match_qcov"] = None
+            #     seq_data["match_tcov"] = None
 
             # merge in the structure data
-            seq_data.update(
-                dbn_plus_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
-            )
-            seq_data.update(
-                dbn_minus_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
-            )
+            # seq_data.update(
+            #     dbn_plus_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
+            # )
+            # seq_data.update(
+            #     dbn_minus_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
+            # )
 
-            # merge in the circ data
-            if circ_tsv.exists() and circ_df is not None:
-                seq_data.update(
-                    circ_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
-                )
-            else:
-                seq_data["original_length"] = None
-                seq_data["ratio"] = None
+            # # merge in the circ data
+            # if circ_tsv.exists() and circ_df is not None:
+            #     seq_data.update(
+            #         circ_df.query(f"seq_id == '{seq_id}'").to_dict(orient="records")[0]
+            #     )
+            # else:
+            #     seq_data["original_length"] = None
+            #     seq_data["ratio"] = None
 
             seq_data["source"] = source
 
@@ -173,7 +193,38 @@ def summarize(
             # add the sequence to the output
             sequences[new_id] = seq_data
 
+    # set the manually computed fields
     res = pd.DataFrame.from_dict(sequences, orient="index")[
+        [
+            "vdsearch_id",
+            "seq_id",
+            "description",
+            "source",
+            "unit_length",
+            "gc_content",
+            "has_ribozymes",
+            "symmetric",
+            "rz_plus",
+            "rz_minus",
+            "rz_plus_from",
+            "rz_plus_to",
+            "rz_plus_evalue",
+            "rz_plus_score",
+            "rz_minus_from",
+            "rz_minus_to",
+            "rz_minus_evalue",
+            "rz_minus_score",
+        ]
+    ]
+
+    # perform a monster join
+    res = res.merge(circ_df, on="seq_id", how="left")
+    res = res.merge(viroiddb_df, left_on="seq_id", right_on="query", how="left")
+    res = res.merge(dbn_plus_df, on="seq_id", how="left")
+    res = res.merge(dbn_minus_df, on="seq_id", how="left")
+
+    # drop the columns we don't need
+    res = res[
         [
             "vdsearch_id",
             "seq_id",
@@ -220,9 +271,11 @@ def summarize(
             "match_tcov",
             "seq",
             "structure_plus",
+            # "seq_minus",
             "structure_minus",
         ]
     ]
+    res.drop_duplicates(inplace=True)
     res.to_csv(outfile, sep="\t", index=False, header=header)
     logging.done(  # type: ignore
         f"Found {len(res.vdsearch_id.to_list())} total viroid-like sequences. "
