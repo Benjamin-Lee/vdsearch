@@ -14,6 +14,10 @@ def fold(
     fasta: Path = FASTA,
     output: Optional[Path] = typer.Option(None),
     threads: int = Threads,
+    ps: bool = typer.Option(False, help="Include PostScript output"),
+    ps_dir: Path = typer.Option(
+        None, help="Directory to store PostScript output. Implies --ps."
+    ),
     temp: int = typer.Option(25, help="Number of degrees C to use for folding"),
 ):
     """Predict secondary structures of circRNAs
@@ -32,7 +36,15 @@ def fold(
         logging.debug("Using default output filename.")
         output = Path(fasta).with_suffix(".dbn")
 
-    command = f"RNAfold --circ --noPS --jobs={threads} --temp={temp} {fasta} > {output}"
+    # we might need to make a directory for the PS files
+    if ps_dir is not None and not ps_dir.exists():
+        ps_dir.mkdir(parents=True)
+
+    command = (
+        f"{'cd ' + str(ps_dir) + ' &&' if ps_dir is not None else '' } "  # support for PS output to a directory
+        # We need the ps or  ps_dir because ps_dir implies ps
+        f"RNAfold --circ {'' if ps or ps_dir is not None else '--noPS'} --jobs={threads} --temp={temp} {fasta.absolute()} > {output.absolute()}"
+    )
     logging.debug(f"{command=}")
     logging.info(f"Folding {fasta}")
     try:
