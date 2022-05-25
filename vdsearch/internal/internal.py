@@ -1,14 +1,14 @@
-import hashlib
 import logging
+import sys
 from pathlib import Path
 from typing import List, Optional
 
 import nimporter
-from numpy import product
 import pandas as pd
+import rich.progress
 import skbio
 import typer
-import rich.progress
+from numpy import product
 from vdsearch.nim import write_seqs as ws
 from vdsearch.rich_wrapper import MyTyper
 from vdsearch.types import FASTA
@@ -251,6 +251,182 @@ def merge_summaries(
 
     # write the output file
     df.to_csv(outfile, sep="\t", index=False)
+
+
+@app.command()
+def realign(
+    results: Path = typer.Argument(
+        ...,
+        help="Path to results directory or file. If a directory, the default summary file from easy-search is used.",
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+    ),
+    id: str = typer.Argument(..., help="ID of the sequence to realign"),
+):
+    """
+    Realign a sequence to the reference genome in rotationally aware mode.
+    """
+
+    if results.is_dir():
+        results = results / "viroid_like.tsv"
+    # get the sequence
+    hit = pd.read_csv(results, sep="\t").query(f"seq_id == '{id}'").iloc[0]
+
+    best_match = hit.match_id
+
+    ref: skbio.DNA
+    # get the reference
+    for seq in skbio.read(
+        str(Path(typer.get_app_dir("vdsearch")) / "data" / "viroiddb.fasta"),
+        format="fasta",
+        constructor=skbio.DNA,
+    ):
+        if seq.metadata["id"] == best_match:
+            ref = seq
+
+    # we have a +/- hit so we'll reverse complement the sequence
+    if hit.match_qstart > hit.match_qend:
+        start, end = hit.match_qend, hit.match_qstart
+        hit.seq = str(skbio.RNA(hit.seq).reverse_complement())
+    else:
+        start, end = hit.match_qstart, hit.match_qend
+
+    # rotate the sequence
+    seq = str(skbio.RNA(hit.seq))
+    diff = int(hit.match_tstart - start)
+    seq = seq[diff:] + seq[:diff]
+    seq = seq.replace("U", "T")
+    seq = skbio.DNA(seq, metadata={"id": hit.seq_id})
+
+    import warnings
+
+    warnings.filterwarnings("ignore")
+
+    # perform the alignment
+    alignment, score, start_end_positions = skbio.alignment.local_pairwise_align_ssw(
+        seq, ref
+    )
+
+    import sys
+
+    alignment.write(sys.stdout, format="fasta")
+    print(
+        f"{100 - skbio.sequence.distance.hamming(alignment[0], alignment[1]) * 100:.1f}",
+        file=sys.stderr,
+    )
+
+
+@app.command()
+def orfs(
+    fasta: Path = FASTA,
+    outfile: Path = typer.Argument(..., help="Path to output file", dir_okay=False),
+    orf_len: int = typer.Option(100, help="minimum ORF length in amino acids"),
+):
+    """
+    Extract the ORFs from a FASTA file.
+    """
+    import orfipy_core
+
+    with rich.progress.open(
+        fasta,
+        transient=True,
+        description="Extracting ORFs",
+    ) as f, outfile.open(
+        "w"
+    ) as o:  # type: ignore
+        for seq in skbio.read(f, format="fasta", constructor=skbio.DNA):
+            # we can't deal with denerate sequences
+            if seq.has_degenerates():
+                continue
+
+            # perform the self-contatenation
+            doubled = str(seq) + str(seq)
+
+            # we use a set to deduplicate ORFs sequences resulting from self-contatenation
+            orfs = set()
+            unique_orfs: List[
+                skbio.Protein
+            ] = []  # note: unique within the sequence's ORFs
+
+            for start, stop, strand, _ in orfipy_core.orfs(
+                doubled,
+                minlen=orf_len * 3,
+                name=seq.metadata["id"],
+                starts=["ATG"],
+                stops=["TAA", "TAG", "TGA"],
+            ):
+                # get the translated ORF
+                orf_seq = skbio.DNA(doubled[start:stop])
+                if strand == "-":
+                    orf_seq = orf_seq.reverse_complement()
+                translated = orf_seq.translate()
+
+                # If the ORF is unique within the sequence, add it to the sequence's ORF list
+                # TODO: keep only the first ORF
+                if str(translated) not in orfs:
+                    orfs.add(str(translated))
+                    unique_orfs.append(
+                        skbio.Protein(
+                            translated,
+                            metadata={
+                                "id": seq.metadata["id"]
+                                + "_start_"
+                                + str(start if strand == "+" else stop)
+                                + "_stop_"
+                                + str(stop if strand == "+" else start)
+                            },
+                        )
+                    )
+
+            # write the unique ORFs out
+            for orf in unique_orfs:
+                orf.write(o, format="fasta")
+
+
+@app.command()
+def info(
+    results: Path = typer.Argument(
+        ...,
+        help="Path to results directory or file. If a directory, the default summary file from easy-search is used.",
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+    ),
+    id: str = typer.Argument(..., help="ID of the sequence to realign"),
+):
+    """
+    Get information about the sequence.
+    """
+    if results.is_dir():
+        results = results / "viroid_like.tsv"
+    # get the sequence
+    hit = pd.read_csv(results, sep="\t").query(f"seq_id == '{id}'").iloc[0]
+
+    from rich import print, box
+    from rich.table import Table
+    from rich.panel import Panel
+    from rich.columns import Columns
+
+    basic_info = Table.grid(padding=(0, 3, 0, 0))
+    basic_info.add_column("ID", hit.seq_id, style="dim")
+    basic_info.add_row("vdsearch ID", hit.vdsearch_id)
+    basic_info.add_row("seq ID", hit.seq_id)
+    basic_info.add_row("source", hit.source)
+    basic_info.add_row(
+        "length (bp)",
+        f"[magenta]{hit.unit_length:,}[/magenta] ({hit.original_length:,})",
+    )
+    basic_info.add_row("GC content", f"{hit.gc_content:.1%}")
+    print(
+        Panel.fit(
+            basic_info,
+            title_align="left",
+            border_style="dim",
+            title="Basic information",
+        )
+    )
+    print(hit)
 
 
 @app.callback()
