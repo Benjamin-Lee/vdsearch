@@ -33,7 +33,7 @@ def summarize(
     ),
 ):
     """
-    Summarize the results of the analysis.
+    Generate a summary table of the analysis.
     """
 
     sequences = {}

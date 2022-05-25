@@ -20,7 +20,7 @@ def fold(
     ),
     temp: int = typer.Option(25, help="Number of degrees C to use for folding"),
 ):
-    """Predict secondary structures of circRNAs
+    """Predict secondary structures of circRNAs.
 
     ## References
 

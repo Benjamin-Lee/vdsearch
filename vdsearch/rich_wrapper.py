@@ -13,23 +13,30 @@ click.rich_click.COMMAND_GROUPS = {
     "vdsearch": [
         {"name": "Easy Workflows ([green]recommended[/])", "commands": ["easy-search"]},
         {
-            "name": "Dataset Management",
-            "commands": ["download-cms", "download-viroiddb", "purge"],
-        },
-        {
-            "name": "Search Steps ([yellow]advanced[/])",
+            "name": "circRNA detection and handling ([yellow]advanced[/])",
             "commands": [
                 "find-circs",
                 "canonicalize",
                 "dedup",
-                "infernal",
-                "rnamotif",
-                "ribozyme-filter",
-                "write-seqs",
+            ],
+        },
+        {
+            "name": "Ribozyme detection ([yellow]advanced[/])",
+            "commands": ["infernal", "rnamotif", "ribozyme-filter"],
+        },
+        {
+            "name": "Analysis Steps ([yellow]advanced[/])",
+            "commands": [
+                "fold",
+                "orfs",
+                "summarize",
                 "cluster",
             ],
         },
-        {"name": "Analysis Steps ([yellow]advanced[/])", "commands": ["fold"]},
+        {
+            "name": "Dataset Management",
+            "commands": ["download-cms", "download-viroiddb", "purge"],
+        },
         {"name": "Internal ([red]dangerous[/])", "commands": ["internal"]},
     ]
 }

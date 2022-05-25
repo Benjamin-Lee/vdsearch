@@ -287,10 +287,10 @@ def realign(
 
     # we have a +/- hit so we'll reverse complement the sequence
     if hit.match_qstart > hit.match_qend:
-        start, end = hit.match_qend, hit.match_qstart
+        start, _ = hit.match_qend, hit.match_qstart
         hit.seq = str(skbio.RNA(hit.seq).reverse_complement())
     else:
-        start, end = hit.match_qstart, hit.match_qend
+        start, _ = hit.match_qstart, hit.match_qend
 
     # rotate the sequence
     seq = str(skbio.RNA(hit.seq))
@@ -308,80 +308,11 @@ def realign(
         seq, ref
     )
 
-    import sys
-
     alignment.write(sys.stdout, format="fasta")
     print(
         f"{100 - skbio.sequence.distance.hamming(alignment[0], alignment[1]) * 100:.1f}",
         file=sys.stderr,
     )
-
-
-@app.command()
-def orfs(
-    fasta: Path = FASTA,
-    outfile: Path = typer.Argument(..., help="Path to output file", dir_okay=False),
-    orf_len: int = typer.Option(100, help="minimum ORF length in amino acids"),
-):
-    """
-    Extract the ORFs from a FASTA file.
-    """
-    import orfipy_core
-
-    with rich.progress.open(
-        fasta,
-        transient=True,
-        description="Extracting ORFs",
-    ) as f, outfile.open(
-        "w"
-    ) as o:  # type: ignore
-        for seq in skbio.read(f, format="fasta", constructor=skbio.DNA):
-            # we can't deal with denerate sequences
-            if seq.has_degenerates():
-                continue
-
-            # perform the self-contatenation
-            doubled = str(seq) + str(seq)
-
-            # we use a set to deduplicate ORFs sequences resulting from self-contatenation
-            orfs = set()
-            unique_orfs: List[
-                skbio.Protein
-            ] = []  # note: unique within the sequence's ORFs
-
-            for start, stop, strand, _ in orfipy_core.orfs(
-                doubled,
-                minlen=orf_len * 3,
-                name=seq.metadata["id"],
-                starts=["ATG"],
-                stops=["TAA", "TAG", "TGA"],
-            ):
-                # get the translated ORF
-                orf_seq = skbio.DNA(doubled[start:stop])
-                if strand == "-":
-                    orf_seq = orf_seq.reverse_complement()
-                translated = orf_seq.translate()
-
-                # If the ORF is unique within the sequence, add it to the sequence's ORF list
-                # TODO: keep only the first ORF
-                if str(translated) not in orfs:
-                    orfs.add(str(translated))
-                    unique_orfs.append(
-                        skbio.Protein(
-                            translated,
-                            metadata={
-                                "id": seq.metadata["id"]
-                                + "_start_"
-                                + str(start if strand == "+" else stop)
-                                + "_stop_"
-                                + str(stop if strand == "+" else start)
-                            },
-                        )
-                    )
-
-            # write the unique ORFs out
-            for orf in unique_orfs:
-                orf.write(o, format="fasta")
 
 
 @app.command()
