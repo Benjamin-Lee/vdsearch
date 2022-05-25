@@ -43,7 +43,7 @@ def fold(
     command = (
         f"{'cd ' + str(ps_dir) + ' &&' if ps_dir is not None else '' } "  # support for PS output to a directory
         # We need the ps or  ps_dir because ps_dir implies ps
-        f"RNAfold --circ {'' if ps or ps_dir is not None else '--noPS'} --jobs={threads} --temp={temp} {fasta.absolute()} > {output.absolute()}"
+        f"RNAfold --circ {'' if ps or ps_dir is not None else '--noPS'} --jobs={threads} --temp={temp} {fasta.absolute()} > {output.absolute()} 2> /dev/null"
     )
     logging.debug(f"{command=}")
     logging.info(f"Folding {fasta}")
@@ -54,4 +54,6 @@ def fold(
             f"Command [cyan]{command}[/] failed with exit code [red]{e.returncode}[/]"
         )
         raise e
+    if ps_dir:
+        logging.info(f"PostScript output written to {ps_dir}")
     logging.done("Folded RNA.")  # type: ignore
