@@ -1,7 +1,11 @@
+from enum import Enum
 import logging
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import List, Optional
+import click
 
 import nimporter
 import pandas as pd
@@ -11,8 +15,8 @@ import typer
 from numpy import product
 from vdsearch.nim import write_seqs as ws
 from vdsearch.rich_wrapper import MyTyper
-from vdsearch.types import FASTA
-from vdsearch.utils import typer_unpacker
+from vdsearch.types import FASTA, Threads
+from vdsearch.utils import check_executable_exists, typer_unpacker
 
 app = MyTyper(hidden=True)
 
@@ -358,6 +362,108 @@ def info(
         )
     )
     print(hit)
+
+
+class PRESET(str, Enum):
+    DEFAULT = "none"
+    NT_PRECLUSTER = "nt-precluster"
+    ORF = "orfs"
+
+
+@app.command()
+def cluster(
+    fasta: Path = FASTA,
+    tmpdir: Path = typer.Option(
+        Path("tmp"),
+        help="Path to temporary directory to use for intermediate files",
+    ),
+    preset: PRESET = typer.Option(
+        "none",
+        help="Mode to use for clustering. Options are 'nt-precluster' or 'orfs'",
+    ),
+    easy_cluster: bool = typer.Option(
+        True,
+        "--easy-cluster/--easy-linclust",
+        help="Use easy-cluster or easy-linclust command",
+    ),
+    threads=Threads,
+    min_seq_id=typer.Option(None, hidden=True),
+    min_aln_len=typer.Option(None, hidden=True),
+    seq_id_mode=typer.Option(None, hidden=True),
+    cov_mode=typer.Option(None, hidden=True),
+    coverage=typer.Option(None, hidden=True),
+    evalue=typer.Option(None, hidden=True),
+    sensitivity=typer.Option(None, hidden=True),
+    cluster_mode=typer.Option(None, hidden=True),
+):
+    """Cluster ORFs from circRNAs."""
+    check_executable_exists("mmseqs", "MMseqs2")
+
+    if preset == PRESET.NT_PRECLUSTER:
+        if min_seq_id is None:
+            min_seq_id = 0.99
+        if min_aln_len is None:
+            min_aln_len = 100
+        if seq_id_mode is None:
+            seq_id_mode = 2
+        if cov_mode is None:
+            cov_mode = 0
+        if coverage is None:
+            coverage = 0.5
+        if evalue is None:
+            evalue = 1e-6
+        if sensitivity is None:
+            sensitivity = 0.75
+        if cluster_mode is None:
+            cluster_mode = 1
+    elif preset == PRESET.ORF:
+        if min_seq_id is None:
+            min_seq_id = 0.90
+        if seq_id_mode is None:
+            seq_id_mode = 2
+        if cov_mode is None:
+            cov_mode = 1
+        if coverage is None:
+            coverage = 0.333
+        if evalue is None:
+            evalue = 0.1
+        if cluster_mode:
+            cluster_mode = 2
+
+    logfile = Path("mmseqs.log.txt")
+
+    logging.info(f"Clustering{' with preset ' + preset if preset != 'none' else ''}...")
+    command = (
+        f"mmseqs {'easy-cluster' if easy_cluster else 'easy_linclust'} "
+        f"{'' if min_seq_id is None else f'--min-seq-id {min_seq_id} '} "
+        f"{'' if min_aln_len is None else f'--min-aln-len {min_aln_len} '} "
+        f"{'' if seq_id_mode is None else f'--seq-id-mode {seq_id_mode} '} "
+        f"{'' if cov_mode is None else f'--cov-mode {cov_mode} '} "
+        f"{'' if coverage is None else f'-c {coverage} '} "
+        f"{'' if evalue is None else f'-e {evalue} '} "
+        f"{'' if sensitivity is None else f'-s {sensitivity} '} "
+        f"{'' if cluster_mode is None else f'--cluster-mode {cluster_mode} '} "
+        f"--threads {threads} "
+        f"{fasta} {fasta.stem}_clu {tmpdir} "
+        f"> {logfile}"
+    )
+    logging.debug(f"{command=}")
+    try:
+        subprocess.run(
+            command,
+            shell=True,
+            check=True,
+        )
+        logfile.unlink()
+
+        logging.done("Done clustering.")  # type: ignore
+    except subprocess.CalledProcessError as e:
+        logging.error(f"MMseqs failed with exit code {e.returncode}")
+        if e.output:
+            logging.error(f"MMseqs output: '{e.output.decode('utf-8').rstrip()}'")
+        raise click.ClickException("MMseqs failed. See logs for error messages.")
+    finally:
+        shutil.rmtree(tmpdir)
 
 
 @app.callback()
