@@ -7,7 +7,7 @@ from rich_click import RichCommand as Command
 from rich_click import RichGroup as Group
 
 click.rich_click.USE_MARKDOWN = True
-click.rich_click.MAX_WIDTH = 88
+click.rich_click.MAX_WIDTH = 120
 
 click.rich_click.COMMAND_GROUPS = {
     "vdsearch": [
