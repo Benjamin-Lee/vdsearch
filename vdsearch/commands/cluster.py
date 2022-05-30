@@ -285,8 +285,6 @@ def cluster(
         if cluster_mode:
             cluster_mode = 2
 
-    logfile = Path("mmseqs.log.txt")
-
     logging.info(f"Clustering{' with preset ' + preset if preset != 'none' else ''}...")
 
     base_command = f"easy-{'linclust' if lin else 'cluster'}"
@@ -306,6 +304,8 @@ def cluster(
     else:
         arg2 = prefix
         arg3 = ""
+
+    logfile = Path("mmseqs.log.txt")
 
     command = (
         f"mmseqs {base_command} "
