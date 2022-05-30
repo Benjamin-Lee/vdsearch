@@ -26,12 +26,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Analysis Steps ([yellow]advanced[/])",
-            "commands": [
-                "fold",
-                "orfs",
-                "summarize",
-                "cluster",
-            ],
+            "commands": ["fold", "orfs", "summarize", "cluster", "ava2cluster"],
         },
         {
             "name": "Dataset Management",

@@ -1,5 +1,5 @@
 from .canonicalize import canonicalize
-from .mmseqs import cluster, search
+from .mmseqs import search
 from .dedup import dedup
 from .download import download_cms, download_viroiddb
 from .easy_search import easy_search
@@ -12,3 +12,4 @@ from .rnamotif import rnamotif
 from .write_seqs import write_seqs
 from .summarize import summarize
 from .orfs import orfs
+from .cluster import cluster, AvA2cluster
