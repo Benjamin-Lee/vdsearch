@@ -186,7 +186,7 @@ def AvA2cluster(
 @typer_unpacker
 def cluster(
     fasta: Path = FASTA,
-    prefix: str = typer.Argument(..., help="Prefix for the output files"),
+    prefix: str = typer.Option(None, help="Prefix for the output files"),
     tmpdir: Path = typer.Option(
         Path(f"tmp.{time.time()}"),
         help="Path to temporary directory to use for intermediate files",
@@ -288,6 +288,10 @@ def cluster(
 
     logging.info(f"Clustering{' with preset ' + preset if preset != 'none' else ''}...")
 
+    # when the user hasn't specified a prefix, use the input FASTA file name
+    if prefix is None:
+        prefix = Path(fasta).stem
+
     base_command = f"easy-{'linclust' if lin else 'cluster'}"
     if preset == PRESET.NT_CLUSTER:
         base_command = f"easy-{'lin' if lin else ''}search"
@@ -306,7 +310,7 @@ def cluster(
         arg2 = prefix
         arg3 = ""
 
-    logfile = Path("mmseqs.log.txt")
+    logfile = Path(f"{prefix}.{preset + '.' if preset != 'none' else '' }mmseqs.txt")
 
     command = (
         f"mmseqs {base_command} "
@@ -336,8 +340,7 @@ def cluster(
             check=True,
         )
 
-        # remove temporary and useless files
-        logfile.unlink()
+        # remove useless files
         Path(prefix + "_all_seqs.fasta").unlink(missing_ok=True)
 
         logging.done("Done clustering.")  # type: ignore
