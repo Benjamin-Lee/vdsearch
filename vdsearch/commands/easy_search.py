@@ -13,7 +13,7 @@ from rich.console import Console
 
 from vdsearch.commands.canonicalize import canonicalize as canonicalize_command
 from vdsearch.commands.fold import fold
-from vdsearch.commands.mmseqs import cluster, search
+from vdsearch.commands.mmseqs import search
 from vdsearch.commands.dedup import dedup
 from vdsearch.commands.find_circs import find_circs
 from vdsearch.commands.infernal import infernal
