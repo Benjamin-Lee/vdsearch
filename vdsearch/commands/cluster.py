@@ -6,6 +6,7 @@ import subprocess
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
+import time
 
 import click
 import igraph as ig
@@ -187,7 +188,7 @@ def cluster(
     fasta: Path = FASTA,
     prefix: str = typer.Argument(..., help="Prefix for the output files"),
     tmpdir: Path = typer.Option(
-        Path("tmp"),
+        Path(f"tmp.{time.time()}"),
         help="Path to temporary directory to use for intermediate files",
     ),
     preset: PRESET = typer.Option(
