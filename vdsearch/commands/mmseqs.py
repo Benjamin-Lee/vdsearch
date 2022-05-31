@@ -17,7 +17,7 @@ def search(
     target: Path = FASTA,
     output_tsv: Path = typer.Argument(..., file_okay=True, dir_okay=False),
     tmpdir: Path = typer.Option(
-        Path(f"tmp.{time.time()}"),
+        Path(f"tmp.{int(time.time())}"),
         help="Path to temporary directory to use for intermediate files",
     ),
     threads=Threads,

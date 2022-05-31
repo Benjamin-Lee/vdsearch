@@ -188,7 +188,7 @@ def cluster(
     fasta: Path = FASTA,
     prefix: str = typer.Option(None, help="Prefix for the output files"),
     tmpdir: Path = typer.Option(
-        Path(f"tmp.{time.time()}"),
+        Path(f"tmp.{int(time.time())}"),
         help="Path to temporary directory to use for intermediate files",
     ),
     preset: PRESET = typer.Option(
