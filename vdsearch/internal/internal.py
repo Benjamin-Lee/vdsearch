@@ -357,6 +357,12 @@ def info(
         )
     )
     print(hit)
+    print()
+    print(f">{hit.seq_id}\n{hit.seq}\n{hit.structure_plus}")
+    print()
+    print(
+        f">{hit.seq_id} [red](-)[/red]\n{skbio.RNA(hit.seq).reverse_complement()}\n{hit.structure_minus}"
+    )
 
 
 @app.callback()
