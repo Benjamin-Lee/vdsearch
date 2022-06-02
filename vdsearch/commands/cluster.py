@@ -118,12 +118,15 @@ def AvA2cluster(
     """
     # we need special logic for performing ANI clustering
     logging.info(
-        f"Converting all-vs-all search to clusters with target average {ani*100:.0f}% ANI..."
+        f"Converting all-vs-all search to clusters with target average {ani*100:.0f}% ANI and {min_cov*100:.0f}% minimum coverage..."
     )
+    logging.debug("Reading all-vs-all search file")
     df = pd.read_csv(path, sep="\t", names=columns.split(","))
 
     # Cull each {query,target} pair to their best available alignment
+    logging.debug("Sorting all-vs-all search file by bit score")
     df.sort_values(by=["query", "target", "bits"], inplace=True, ascending=False)
+    logging.debug("Dropping duplicate alignments, keeping the best")
     df.drop_duplicates(subset=["query", "target"], keep="first", inplace=True)
 
     # for each pair, the length of the shorter sequence and divide by two to deconcatenate
@@ -167,8 +170,11 @@ def AvA2cluster(
     # Create a graph from the node list and add edges weighted by the ANI between
     # the sequences being connected
     graph = ig.Graph()
+    logging.debug("Adding nodes to graph")
     graph.add_vertices(nodes)
+    logging.debug("Adding edges to graph")
     graph.add_edges(edges, attributes={"weight": weights, "ani": weights})
+    logging.info("Picking the best resolution for Leiden clustering")
     leiden_resolution = pick_resolution(graph, target_avg_ani=ani)
     clusters = graph.community_leiden(
         weights="weight", resolution_parameter=leiden_resolution
