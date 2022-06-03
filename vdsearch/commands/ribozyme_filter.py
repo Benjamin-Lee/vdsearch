@@ -135,10 +135,14 @@ def ribozyme_filter(
         if use_evalue_cutoff:
             # we will also use the evalue cutoff to determine if a ribozyme is present
             rz_plus.update(
-                rz_df.query(f"strand == '+' & evalue < {max_evalue ** 0.5}").seq_id
+                rz_df.query(
+                    f"strand == '+' & evalue < {max_evalue ** (0.5 if max_evalue < 1 else 2)}"
+                ).seq_id
             )
             rz_minus.update(
-                rz_df.query(f"strand == '-' & evalue < {max_evalue ** 0.5}").seq_id
+                rz_df.query(
+                    f"strand == '-' & evalue < {max_evalue ** (0.5 if max_evalue < 1 else 2)}"
+                ).seq_id
             )
             rz_significant.update(rz_df.query(f"evalue < {max_evalue}").seq_id)
 
