@@ -309,6 +309,9 @@ def cluster(
             shell=True,
             check=True,
         )
+        # override the input FASTA file with the duplicated one
+        fasta = Path(f'{fasta.stem}.duplicated.fasta')
+        # the target is also the duplicated FASTA file
         arg2 = str(fasta)
         arg3 = prefix + "_AvA"
 
@@ -362,7 +365,7 @@ def cluster(
 
     # we might need to postprocess the output to make it consistent
     if preset == PRESET.NT_CLUSTER:
-        AvA2cluster(path=Path(arg3), outfile=Path(prefix + "_cluster.tsv"))
+        # AvA2cluster(path=Path(arg3), outfile=Path(prefix + "_cluster.tsv"))
         # we duplicated the input file so let's clean up
         # double check the name just to be sure
         if ".duplicated.fasta" in fasta.stem:
