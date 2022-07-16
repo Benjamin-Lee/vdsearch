@@ -18,7 +18,8 @@ setup(
         "rich",
         "rich_click",
         "shellingham",
-        "typer",
+        "typer<0.6",
         "scikit-bio",
+        "igraph",
     ],
 )
