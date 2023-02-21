@@ -1,0 +1,74 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it using these metadata.
+title: Viroid-like circRNA discovery and analysis suite
+authors:
+- family-names: Lee
+  given-names: Benjamin D.
+- family-names: Neri
+  given-names: Uri
+- family-names: Roux
+  given-names: Simon
+- family-names: Wolf
+  given-names: Yuri I.
+- family-names: Camargo
+  given-names: Antonio Pedro
+- family-names: Krupovic
+  given-names: Mart
+- family-names: Simmonds
+  given-names: Peter
+- family-names: Kyrpides
+  given-names: Nikos
+- family-names: Gophna
+  given-names: Uri
+- family-names: Dolja
+  given-names: Valerian V.
+- family-names: Koonin
+  given-names: Eugene V.
+preferred-citation:
+  type: article
+  title: Mining metatranscriptomes reveals a vast world of viroid-like circular RNAs
+  authors:
+  - family-names: Lee
+    given-names: Benjamin D.
+  - family-names: Neri
+    given-names: Uri
+  - family-names: Roux
+    given-names: Simon
+  - family-names: Wolf
+    given-names: Yuri I.
+  - family-names: Camargo
+    given-names: Antonio Pedro
+  - family-names: Krupovic
+    given-names: Mart
+  - family-names: Simmonds
+    given-names: Peter
+  - family-names: Kyrpides
+    given-names: Nikos
+  - family-names: Gophna
+    given-names: Uri
+  - family-names: Dolja
+    given-names: Valerian V.
+  - family-names: Koonin
+    given-names: Eugene V.
+  journal: Cell
+  volume: '186'
+  issue: '3'
+  year: '2023'
+  issn: 0092-8674
+  doi: 10.1016/j.cell.2022.12.039
+  url: https://www.sciencedirect.com/science/article/pii/S0092867422015823
+  abstract: Summary Viroids and viroid-like covalently closed circular (ccc) RNAs
+    are minimal replicators that typically encode no proteins and hijack cellular
+    enzymes for replication. The extent and diversity of viroid-like agents are poorly
+    understood. We developed a computational pipeline to identify viroid-like cccRNAs
+    and applied it to 5,131 metatranscriptomes and 1,344 plant transcriptomes. The
+    search yielded 11,378 viroid-like cccRNAs spanning 4,409 species-level clusters,
+    a 5-fold increase compared to the previously identified viroid-like elements.
+    Within this diverse collection, we discovered numerous putative viroids, satellite
+    RNAs, retrozymes, and ribozy-like viruses. Diverse ribozyme combinations and unusual
+    ribozymes within the cccRNAs were identified. Self-cleaving ribozymes were identified
+    in ambiviruses, some mito-like viruses and capsid-encoding satellite virus-like
+    cccRNAs. The broad presence of viroid-like cccRNAs in diverse transcriptomes and
+    ecosystems implies that their host range is far broader than currently known,
+    and matches to CRISPR spacers suggest that some cccRNAs replicate in prokaryotes.
+  start: 646-661.e4
