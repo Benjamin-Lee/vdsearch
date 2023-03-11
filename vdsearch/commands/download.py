@@ -1,8 +1,8 @@
+import fileinput
 import logging
 from pathlib import Path
-import typer
-import fileinput
 
+import typer
 
 from vdsearch.types import Threads
 
@@ -13,9 +13,9 @@ Taken shamelessly from https://github.com/Textualize/rich/blob/4b3b6531ad349312f
 """
 
 import os.path
-import sys
-from concurrent.futures import as_completed, ThreadPoolExecutor
 import signal
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import partial
 from threading import Event
 from typing import Iterable
@@ -83,10 +83,21 @@ def download(urls: Iterable[str], dest_dir: str):
 
 def download_viroiddb():
     """Download the latest ViroidDB dataset."""
-    print("downloading vdb")
-    # with Halo(text="Downloading ViroidDB dataset...") as sp:
-    #     time.sleep(2)
-    #     sp.succeed("Downloaded ViroidDB")
+    viroiddb_dir = Path(typer.get_app_dir("vdsearch")) / "data"
+    viroiddb_dir.mkdir(parents=True, exist_ok=True)
+
+    viroiddb_path = viroiddb_dir / "viroiddb.fasta"
+    logging.info("Downloading ViroidDB data...")  # type: ignore
+    download(
+        [
+            "https://viroids.org/db/latest/all.fasta",
+        ],
+        viroiddb_dir,
+    )
+    # Rename the file to viroiddb.fasta
+    # Note: it keeps the second to last part of the path as the filename
+    (viroiddb_dir / "latest").rename(viroiddb_path)
+    logging.done("Downloaded ViroidDB data.")  # type: ignore
 
 
 cms = {
