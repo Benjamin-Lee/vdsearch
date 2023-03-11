@@ -38,8 +38,29 @@ vdsearch easy-search my-transcriptome.fasta
 
 ## Installation
 
-Installation is still a work in progress since the code is still in beta.
-If you want to use it, please clone the repository and run the following commands:
+### Using Docker
+
+The easiest way to use `vdsearch` is to use the [Docker image](https://hub.docker.com/r/benjaminlee/vdsearch). This will install all dependencies for you and run the code in a virtual environment.
+
+```bash
+docker pull benjamindlee/vdsearch
+```
+
+Note: When using Docker, you will have to mount the directory containing your input files to the container. For example, if you have a file called `my-transcriptome.fasta` in the current directory, you can run the following command:
+
+```bash
+docker run -v $(pwd):/data benjamindlee/vdsearch easy-search /data/my-transcriptome.fasta
+```
+
+You may have to configure Docker to use more memory and CPUs. For example, if you have 16 CPUs and 64 GB of RAM, you can run the following command:
+
+```bash
+docker run -v $(pwd):/data --cpus 16 -m 64G benjamindlee/vdsearch easy-search /data/my-transcriptome.fasta
+```
+
+### From source
+
+If you want to run the code directly from source and will install dependencies (`seqkit`, etc.) yourself, please clone the repository and run the following commands:
 
 ```bash
 git clone https://github.com/Benjamin-Lee/vdsearch.git
