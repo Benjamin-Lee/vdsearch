@@ -310,7 +310,7 @@ def cluster(
             check=True,
         )
         # override the input FASTA file with the duplicated one
-        fasta = Path(f'{fasta.stem}.duplicated.fasta')
+        fasta = Path(f"{fasta.stem}.duplicated.fasta")
         # the target is also the duplicated FASTA file
         arg2 = str(fasta)
         arg3 = prefix + "_AvA"
