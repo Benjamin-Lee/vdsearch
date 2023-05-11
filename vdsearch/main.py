@@ -58,6 +58,8 @@ def main(
 ):
     """
     Workflows and utilities for finding and analyzing viroid-like circular RNAs.
+
+    > Lee, B. D., Neri, U., Roux, S., Wolf, Y. I., Camargo, A. P., Krupovic, M., RNA Virus Discovery Consortium, Simmonds, P., Kyrpides, N., Gophna, U., Dolja, V. V., & Koonin, E. V. (2023). Mining metatranscriptomes reveals a vast world of viroid-like circular RNAs. *Cell*, 186(3), 646–661.e4. [https://doi.org/10.1016/j.cell.2022.12.039](https://doi.org/10.1016/j.cell.2022.12.039)
     """
     level = logging.DEBUG if verbose else logging.INFO
     # configure logging for the project to use Rich

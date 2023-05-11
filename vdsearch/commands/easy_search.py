@@ -70,7 +70,6 @@ def easy_search(
     5. Also search the circRNAs against a database of known viroid-like RNAs (ViroidDB)
     6. Using the ribozyme data and search results, output viroid-like sequences
     """
-
     # region: preflight checks
     logging.debug("Checking that all needed tools exist...")
     check_executable_exists("seqkit")
@@ -328,7 +327,7 @@ def easy_search(
                 """
 If you use these results in your research, please cite:
 
-> B.D. Lee *et al.* (2022) vdsearch: A tool for viroid-like RNA searches.
+> Lee, B. D., Neri, U., Roux, S., Wolf, Y. I., Camargo, A. P., Krupovic, M., RNA Virus Discovery Consortium, Simmonds, P., Kyrpides, N., Gophna, U., Dolja, V. V., & Koonin, E. V. (2023). Mining metatranscriptomes reveals a vast world of viroid-like circular RNAs. *Cell*, 186(3), 646–661.e4. [https://doi.org/10.1016/j.cell.2022.12.039](https://doi.org/10.1016/j.cell.2022.12.039)
             """
             ),
             title_align="left",
