@@ -1,28 +1,24 @@
-import subprocess
 import logging
 import shutil
+import subprocess
 from pathlib import Path
 
-import rich_click as click
 import pandas as pd
-from pkg_resources import resource_filename  # type: ignore
 import rich
+import rich_click as click
 import skbio
 import typer
+from pkg_resources import resource_filename  # type: ignore
 from rich.console import Console
 
-from vdsearch.commands.canonicalize import canonicalize as canonicalize_command
 from vdsearch.commands.fold import fold
-from vdsearch.commands.mmseqs import search
-from vdsearch.commands.dedup import dedup
-from vdsearch.commands.find_circs import find_circs
 from vdsearch.commands.infernal import infernal
+from vdsearch.commands.mmseqs import search
 from vdsearch.commands.ribozyme_filter import ribozyme_filter
 from vdsearch.commands.rnamotif import rnamotif
 from vdsearch.commands.summarize import summarize
-from vdsearch.nim import write_seqs as ws
 from vdsearch.types import FASTA, ReferenceCms, Threads, ViroidDB
-from vdsearch.utils import check_executable_exists
+from vdsearch.utils import check_executable_exists, write_seqs
 
 
 def easy_search(
@@ -123,28 +119,32 @@ def easy_search(
     # if the input is assumed to be circular but canonicalization is required
     elif circular and canonicalize:
         logging.warning("Skipping circularity detection but canonicalizing.")
-        canonicalize_command(fasta, circs, min_len=100, max_len=10_000)
+        subprocess.run(
+            f"circkit canonicalize {fasta} --threads {threads} "
+            f"| seqkit seq --min-len 100 --max-len 10000 --line-width 0 --quiet --threads {threads} --out-file {circs}",
+            shell=True,
+            check=True,
+        )
     # if the input is circular and canonicalization is not required
     elif circular and not canonicalize:
         logging.warning("Assuming input are canonical circular sequences.")
         shutil.copyfile(fasta, circs)
     # run integrated circularity detection and canonicalization
     else:
-        find_circs(
-            fasta,
-            circs,
-            canonicalize=True,
-            tsv=True,
-            min_len=100,
-            max_monomer_len=10_000,
-            max_len=10_000,
+        subprocess.run(
+            f"circkit monomerize {fasta} --threads {threads} --table {circs.with_suffix('.tsv')} --min-length 100 --max-length 10000 --min-identity 0.95"
+            f"| circkit canonicalize --threads {threads} --output {circs}",
         )
     # endregion
 
     # region: run dedup using seqkit
     deduped_circs = outdir / "deduped_circs.fasta"
     if not deduped_circs.exists():
-        dedup(circs, deduped_circs, threads=threads)
+        subprocess.run(
+            f"circkit uniq --threads {threads} --canonicalize {circs} --output {deduped_circs}",
+            shell=True,
+            check=True,
+        )
     else:
         logging.warning("CircRNAs already deduplicated. Skipping.")
     # endregion
@@ -192,9 +192,9 @@ def easy_search(
             rnamotif_txt=rnamotif_output,
         )
         logging.info("Outputting sequences with ribozymes...")
-        ws.write_seqs(
-            str(deduped_circs),
-            str(rz_seqs),
+        write_seqs(
+            deduped_circs,
+            rz_seqs,
             ribozymes["ribozy_likes"].seq_id.tolist(),
         )
         logging.done(f"Wrote to {rz_seqs}")  # type: ignore
@@ -219,9 +219,9 @@ def easy_search(
                 ","
             ),
         )
-        ws.write_seqs(
-            str(deduped_circs),
-            str(seqs_matching_viroiddb),
+        write_seqs(
+            deduped_circs,
+            seqs_matching_viroiddb,
             search_results["query"].tolist(),
         )
         logging.done(f"Wrote to {seqs_matching_viroiddb}")  # type: ignore

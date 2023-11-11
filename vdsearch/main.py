@@ -9,7 +9,6 @@ from . import commands
 from .internal import internal
 from .rich_wrapper import MyTyper
 
-
 # override for autocompletion to work
 if os.environ.get("_VDSEARCH_COMPLETE", None) is not None:
     app = typer.Typer()
@@ -19,24 +18,19 @@ else:
 
 app.command()(commands.download_cms)  # type: ignore
 app.command()(commands.download_viroiddb)  # type: ignore
-app.command()(commands.find_circs)  # type: ignore
-app.command()(commands.dedup)  # type: ignore
 app.command()(commands.cluster)  # type: ignore
 app.command()(commands.AvA2cluster)  # type: ignore
 app.command()(commands.easy_search)  # type: ignore
-app.command()(commands.canonicalize)  # type: ignore
 app.command()(commands.infernal)  # type: ignore
 app.command("ribozyme-filter")(commands.ribozyme_filter_wrapper)  # type: ignore
 app.command()(commands.purge)  # type: ignore
-# app.command()(commands.write_seqs)  # type: ignore
 app.command()(commands.fold)
 app.command()(commands.rnamotif)
-app.command()(commands.orfs)
 app.command()(commands.summarize)
 
 # Support for using --version
 # See https://github.com/tiangolo/typer/issues/52
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 
 def version_callback(value: bool):

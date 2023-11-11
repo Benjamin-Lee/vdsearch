@@ -4,13 +4,11 @@ from pathlib import Path
 from typing import List, Optional
 
 # import matplotlib.pyplot as plt
-import nimporter
 import pandas as pd
 import skbio
 import typer
 from numpy import product
 
-from vdsearch.nim import write_seqs as ws
 from vdsearch.rich_wrapper import MyTyper
 from vdsearch.types import FASTA
 from vdsearch.utils import typer_unpacker
@@ -122,36 +120,36 @@ def cache_path():
     return Path(typer.get_app_dir("vdsearch"))
 
 
-@app.command()
-def clusters2fastas(
-    cluster_tsv: Path = typer.Argument(
-        ..., help="Path to cluster TSV file from MMseqs2"
-    ),
-    fasta: Path = FASTA,
-    outdir: Path = typer.Argument(
-        ..., dir_okay=True, file_okay=False, help="Path to output directory"
-    ),
-):
-    """
-    Write each cluster to a FASTA files.
+# @app.command()
+# def clusters2fastas(
+#     cluster_tsv: Path = typer.Argument(
+#         ..., help="Path to cluster TSV file from MMseqs2"
+#     ),
+#     fasta: Path = FASTA,
+#     outdir: Path = typer.Argument(
+#         ..., dir_okay=True, file_okay=False, help="Path to output directory"
+#     ),
+# ):
+#     """
+#     Write each cluster to a FASTA files.
 
-    This is useful for doing per-cluster analysis with tools that expect a single FASTA file (_e.g._ alignment).
-    """
+#     This is useful for doing per-cluster analysis with tools that expect a single FASTA file (_e.g._ alignment).
+#     """
 
-    # map each sequence to its cluster
-    seq_to_cluster = {}
-    cluster_df = pd.read_csv(cluster_tsv, sep="\t", names=["cluster_id", "seq_id"])
-    for cluster_id, seq_id in cluster_df.itertuples(index=False):
-        seq_to_cluster[seq_id] = cluster_id
+#     # map each sequence to its cluster
+#     seq_to_cluster = {}
+#     cluster_df = pd.read_csv(cluster_tsv, sep="\t", names=["cluster_id", "seq_id"])
+#     for cluster_id, seq_id in cluster_df.itertuples(index=False):
+#         seq_to_cluster[seq_id] = cluster_id
 
-    clusters = cluster_df["cluster_id"].unique().tolist()
+#     clusters = cluster_df["cluster_id"].unique().tolist()
 
-    outdir.mkdir(exist_ok=True, parents=True)
+#     outdir.mkdir(exist_ok=True, parents=True)
 
-    # do a call to Nim to write the FASTA files out
-    ws.write_clusters(str(fasta), str(outdir), seq_to_cluster, clusters)
+#     # do a call to Nim to write the FASTA files out
+#     ws.write_clusters(str(fasta), str(outdir), seq_to_cluster, clusters)
 
-    logging.done(f"Wrote {len(clusters)} cluster FASTA files to {outdir}")  # type: ignore
+#     logging.done(f"Wrote {len(clusters)} cluster FASTA files to {outdir}")  # type: ignore
 
 
 # rank sequences by their multiplied ribozyme E values
@@ -497,6 +495,7 @@ def plot(
             elif i % 3 == 2:
                 structure = line.strip()
                 plot_single(seq_id, structure, include_title, outdir)
+
 
 @app.callback()
 def callback():
