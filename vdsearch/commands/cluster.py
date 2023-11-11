@@ -277,7 +277,7 @@ def cluster(
             min_seq_id = 0.40
         if max_seqs is None and not lin: # max_seqs is not supported by easy-linsearch
             max_seqs = 1_000_000
-        if k is None:
+        if k is None and not lin:
             k = 5
     elif preset == PRESET.ORF:
         if min_seq_id is None:
