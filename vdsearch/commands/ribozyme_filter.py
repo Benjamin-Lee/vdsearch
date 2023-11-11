@@ -106,7 +106,6 @@ def ribozyme_filter(
     rz_significant = set()
 
     for rz_name, rz_df in ribozymes.groupby(["ribozyme"]):
-
         # short circuit if we aren't doing verbose output
         if logging.getLogger().isEnabledFor(logging.DEBUG):
             logging.debug(
