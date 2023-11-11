@@ -3,10 +3,10 @@ import logging
 import random
 import shutil
 import subprocess
+import time
 from collections import defaultdict
 from enum import Enum
 from pathlib import Path
-import time
 
 import click
 import igraph as ig
@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import rich.progress
 import typer
+
 from vdsearch.types import FASTA, Threads
 from vdsearch.utils import check_executable_exists, typer_unpacker
 
@@ -274,7 +275,7 @@ def cluster(
             evalue = 1e-3
         if min_seq_id is None:
             min_seq_id = 0.40
-        if max_seqs is None:
+        if max_seqs is None and not lin: # max_seqs is not supported by easy-linsearch
             max_seqs = 1_000_000
         if k is None:
             k = 5
