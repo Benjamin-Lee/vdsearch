@@ -21,6 +21,8 @@ setup(
         "typer<0.6",
         "scikit-bio",
         "igraph",
+        "pycirclize",
+        "matplotlib"
     ],
     include_package_data=True,
 )

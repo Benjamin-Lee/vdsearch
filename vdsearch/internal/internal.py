@@ -3,15 +3,20 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+# import matplotlib.pyplot as plt
 import nimporter
 import pandas as pd
 import skbio
 import typer
 from numpy import product
+
 from vdsearch.nim import write_seqs as ws
 from vdsearch.rich_wrapper import MyTyper
 from vdsearch.types import FASTA
 from vdsearch.utils import typer_unpacker
+
+# from pycirclize import Circos
+
 
 app = MyTyper(hidden=True)
 
@@ -166,7 +171,6 @@ def rank_by_ribozyme(
     df = pd.read_csv(infernal_tsv, sep="\t")
     outdf = []
     for seq_name, seq_df in df.groupby(["seq_id"]):
-
         e_values = []
 
         for pol in ["+", "-"]:
@@ -364,6 +368,135 @@ def info(
         f">{hit.seq_id} [red](-)[/red]\n{skbio.RNA(hit.seq).reverse_complement()}\n{hit.structure_minus}"
     )
 
+
+@app.command()
+def plot(
+    dbn: Path = typer.Argument(
+        ...,
+        help="Path to dot-bracket notation file",
+        file_okay=True,
+        dir_okay=False,
+    ),
+    include_title: bool = True,
+    outdir: Path = Path("."),
+):
+    def get_closest_paired_position(position: int, paired_positions: dict[int, int]):
+        if position in paired_positions:
+            return paired_positions[position]
+        else:
+            delta = 1
+            while (
+                position + delta not in paired_positions
+                and position - delta not in paired_positions
+                and delta < 100
+            ):
+                delta += 1
+            if position + delta in paired_positions:
+                return paired_positions[position + delta]
+            elif position - delta in paired_positions:
+                return paired_positions[position - delta]
+            else:
+                return None
+
+    def pairings(
+        structure: str,
+    ) -> dict[int, int]:
+        """Return a dictionary of paired positions in a secondary structure.
+
+        Parameters
+        ----------
+        structure : str
+            Secondary structure in dot-bracket notation.
+
+        Returns
+        -------
+        dict[int, int]
+            Dictionary of paired positions.
+        """
+        open = []
+        pairings = {}
+        for i, base in enumerate(structure):
+            if base == "(":
+                open.append(i)
+            elif base == ")":
+                from_position = open.pop()
+                to_position = i
+                pairings[from_position] = to_position
+                pairings[to_position] = from_position
+        return pairings
+
+    def plot_single(seq_id: str, structure: str, include_title: bool, outdir: Path):
+        circos = Circos(sectors={"sequence": len(structure)})  # gff.range_size})
+
+        if include_title:
+            circos.text(seq_id, deg=315, r=150, size=12)
+
+        sector = circos.sectors[0]
+
+        # add the secondary structure track
+        open = []
+        pairings = {}
+        for i, base in enumerate(structure):
+            if base == "(":
+                open.append(i)
+            elif base == ")":
+                from_position = open.pop()
+                to_position = i
+                circos.link(
+                    (sector.name, from_position, from_position + 1),
+                    (sector.name, to_position, to_position + 1),
+                    allow_twist=False,
+                    r1=70,
+                    r2=70,
+                )
+                pairings[from_position] = to_position
+                pairings[to_position] = from_position
+
+        # rz_track = sector.add_track((90, 110))
+        # rz_track.axis(fc="#EEEEEE", ec="none")
+
+        # rz_pos_list, rz_labels = [], []
+
+        # if not pd.isna(row.rz_plus):
+        #     rz_track.arrow(row.rz_plus_from, row.rz_plus_to, r_lim=(91, 99), fc="lightseagreen")
+        #     rz_pos_list.append((row.rz_plus_from + row.rz_plus_to) / 2)
+        #     rz_labels.append(row.rz_plus)
+        #     rz_track.rect(get_closest_paired_position(row.rz_plus_from, pairings), get_closest_paired_position(row.rz_plus_to, pairings), fc="paleturquoise", r_lim=(101, 109))
+
+        # if not pd.isna(row.rz_minus):
+        #     rz_track.arrow(row.rz_minus_from, row.rz_minus_to, r_lim=(91, 99), fc="tomato")
+        #     rz_pos_list.append((row.rz_minus_from + row.rz_minus_to) / 2)
+        #     rz_labels.append(row.rz_minus)
+        #     rz_track.rect(get_closest_paired_position(row.rz_minus_from, pairings), get_closest_paired_position(row.rz_minus_to, pairings), fc="lightsalmon", r_lim=(101, 109))
+
+        # rz_track.xticks(
+        #     rz_pos_list,
+        #     rz_labels,
+        # )
+
+        # # Plot xticks & intervals on inner position
+        # rz_track.xticks_by_interval(
+        #     interval=50,
+        #     outer=False,
+        #     show_bottom_line=True,
+        #     label_formatter=lambda v: f"{v} nt",
+        #     label_orientation="vertical",
+        #     line_kws=dict(ec="grey"),
+        # )
+
+        circos.savefig(outdir / f"{seq_id}.png", dpi=300)
+        plt.close()
+
+    with dbn.open() as f:
+        seq_id = ""
+        structure = ""
+
+        for i, line in enumerate(f):
+            if i % 3 == 0:
+                seq_id = line.strip()
+            elif i % 3 == 2:
+                structure = line.strip()
+                plot_single(seq_id, structure, include_title, outdir)
 
 @app.callback()
 def callback():
